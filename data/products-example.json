@@ -1,0 +1,108 @@
+[
+    {
+        "id": "1",
+        "name": "iPhone 15 Pro",
+        "description": "Latest generation Apple smartphone",
+        "price": 5999.99,
+        "size": "6.1 inches",
+        "weight": 0.187,
+        "color": "Space Black",
+        "type": "CELLPHONES",
+        "rating": 4.8,
+        "specifications": {
+            "brand": "Apple",
+            "storage_gb": "256",
+            "memory_gb": "8",
+            "screen_size": "6.1",
+            "camera_mp": "48"
+        }
+    },
+    {
+        "id": "2",
+        "name": "samsung galaxy S24 Plus",
+        "description": "Latest generation samsung smartphone",
+        "price": 4999.99,
+        "size": "5.9 inches",
+        "weight": 0.147,
+        "color": "Silver",
+        "type": "CELLPHONES",
+        "rating": 4.4,
+        "specifications": {
+            "brand": "Samsung",
+            "storage_gb": "256",
+            "memory_gb": "12",
+            "screen_size": "5.9",
+            "camera_mp": "50"
+        }
+    },
+    {
+        "id": "3",
+        "name": "Premium T-Shirt",
+        "description": "High quality shirt in pure cotton",
+        "price": 129.90,
+        "size": "M",
+        "weight": 0.250,
+        "color": "White",
+        "type": "CLOTHING",
+        "rating": 4.5,
+        "specifications": {
+            "size_us": "M",
+            "size_eu": "40",
+            "material": "100% cotton",
+            "composition": "Pure cotton"
+        }
+    },
+    {
+        "id": "4",
+        "name": "Premium Coffee 500g",
+        "description": "Roasted and ground coffee with selected beans",
+        "price": 45.90,
+        "size": "500g",
+        "weight": 0.5,
+        "color": "Brown",
+        "type": "FOOD",
+        "rating": 4.7,
+        "specifications": {
+            "manufacturing_date": "2024-01-15",
+            "expiration_date": "2025-01-15",
+            "nutriscore": "A",
+            "origin": "Brazil"
+        }
+    },
+    {
+        "id": "5",
+        "name": "Dell 27 inch Monitor",
+        "description": "Full HD monitor with adjustable stand",
+        "price": 899.99,
+        "size": "27\"",
+        "weight": 5.2,
+        "color": "Black",
+        "type": "COMPUTERS",
+        "rating": 4.3,
+        "specifications": {
+            "brand": "Dell",
+            "processor": "N/A",
+            "ram_gb": "N/A",
+            "storage_gb": "N/A",
+            "screen_size": "27"
+        }
+    },
+    {
+        "id": "6",
+        "name": "Sports Running Shoes",
+        "description": "Running shoes with cushioning technology",
+        "price": 399.99,
+        "size": "42",
+        "weight": 0.350,
+        "color": "Black with Red",
+        "type": "CLOTHING",
+        "rating": 4.6,
+        "specifications": {
+            "size_us": "10",
+            "size_eu": "42",
+            "material": "Mesh + Rubber",
+            "composition": "Synthetic fibers with rubber sole",
+            "color_variations": "3"
+        }
+    }
+]

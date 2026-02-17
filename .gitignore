@@ -1,0 +1,17 @@
+target/
+.DS_Store
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+data/products.json
+.classpath
+.project
+.settings/
+.m2/
+*.log
+*.class
+*.jar
+*.war
+.env
