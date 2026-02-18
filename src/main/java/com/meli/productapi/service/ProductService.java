@@ -5,6 +5,7 @@ import com.meli.productapi.exception.ProductNotFoundException;
 import com.meli.productapi.model.Product;
 import com.meli.productapi.model.ProductComparisonResponse;
 import com.meli.productapi.model.ProductFilter;
+import com.meli.productapi.model.PageResponse;
 import com.meli.productapi.model.template.FieldDefinition;
 import com.meli.productapi.model.template.ProductTemplate;
 import com.meli.productapi.repository.ProductRepositoryInterface;
@@ -112,7 +113,7 @@ public class ProductService {
      * @param filter Object with all search filters
      * @return Filtered and paginated list of products
      */
-    public List<Product> searchProducts(ProductFilter filter) {
+    public PageResponse<Product> searchProducts(ProductFilter filter) {
         // Validate price range relationship
         filter.validate();
 
@@ -215,45 +216,17 @@ public class ProductService {
         
         log.debug("Filtered {} products from {} total", filteredProducts.size(), allProducts.size());
         
-        // Apply pagination
-        List<Product> result = applyPagination(filteredProducts, filter.getPage(), filter.getPageSize());
+        // Apply pagination via PageResponse
+        PageResponse<Product> result;
+        if (filter.getPageSize() != null) {
+            int currentPage = (filter.getPage() != null && filter.getPage() > 0) ? filter.getPage() : 1;
+            result = PageResponse.of(filteredProducts, currentPage, filter.getPageSize());
+        } else {
+            result = PageResponse.ofAll(filteredProducts);
+        }
         log.debug("Returning {} products after pagination (page={}, pageSize={})",
-                result.size(), filter.getPage(), filter.getPageSize());
+                result.getContent().size(), result.getPage(), result.getPageSize());
         return result;
-    }
-
-    /**
-     * Applies pagination to the product list
-     * 
-     * @param products List of products
-     * @param page     Page number (default: 1)
-     * @param pageSize Page size (null = all)
-     * @return Paginated list
-     */
-    private List<Product> applyPagination(List<Product> products, Integer page, Integer pageSize) {
-        // If pageSize is null, return all
-        if (pageSize == null) {
-            return products;
-        }
-        
-        // Validate pageSize
-        if (pageSize <= 0) {
-            throw new IllegalArgumentException("Page size must be greater than zero");
-        }
-        
-        // Default page to 1 if null, zero or negative
-        int currentPage = (page != null && page > 0) ? page : 1;
-        
-        // Calculate indices
-        int startIndex = (currentPage - 1) * pageSize;
-        int endIndex = Math.min(startIndex + pageSize, products.size());
-        
-        // Check if page is within bounds
-        if (startIndex >= products.size()) {
-            return new ArrayList<>();
-        }
-        
-        return products.subList(startIndex, endIndex);
     }
 
     /**

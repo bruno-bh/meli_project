@@ -1,89 +1,107 @@
-# TODO — Implementação do Plan
+# TODO — Phase 1 Improvements
 
-> Checklist baseado no [plan.md](plan.md). Marcar `[x]` conforme cada item for concluído.
-
----
-
-## Fase 1 — Fundação (`ProductTemplateService`)
-
-### 3.1 `getComparableFields(String type)`
-- [x] Criar método que retorna `List<String>` com campos (`fields` + `specifications`) onde `comparable: true`
-- [x] Teste: type válido retorna apenas campos comparáveis
-- [x] Teste: type inválido retorna lista vazia
-
-### 3.2 `getAllSpecificationKeys()`
-- [x] Criar método que retorna `Set<String>` com a união de todas as spec keys de todos os templates
-- [x] Teste: retorna todas as specs conhecidas de todos os types
-
-### Validação Fase 1
-- [x] `mvn clean test` — todos os testes passando
+> Checklist based on [plan.md](plan.md). Mark `[x]` as each item is completed.
 
 ---
 
-## Fase 2 — GET /products
+## 1. 📖 Swagger / OpenAPI Documentation _(1st — zero risk)_
 
-### 1.1 Validar `type` no filtro
-- [x] Em `ProductService.searchProducts()`, validar `filter.getType()` contra `templateService.isValidType()` antes de aplicar filtros
-- [x] Lançar `IllegalArgumentException` com mensagem incluindo os types disponíveis
-- [x] Teste unitário (`ProductServiceTest`): type inválido → `IllegalArgumentException`
-- [x] Teste controller (`ProductControllerTest`): `?type=XPTO` → 400 com mensagem de sugestão
+### 1.1 Setup
+- [x] Add `springdoc-openapi-starter-webmvc-ui` (v2.3.0) dependency to `pom.xml`
+- [x] Add Swagger/OpenAPI properties to `src/main/resources/application.properties`
+- [x] Create `src/main/java/com/meli/productapi/config/OpenApiConfig.java` (info, security scheme, contact)
 
-### 1.2 Remover `description` e adicionar filtro por `specifications`
-- [x] Remover campo `description` do `ProductFilter.java`
-- [x] Adicionar campo `Map<String, String> specifications` no `ProductFilter.java`
-- [x] Alterar `ProductController.getProducts()` para capturar params extras de spec e popular o `ProductFilter`
-- [x] Alterar `ProductService.searchProducts()` para remover filtro por description
-- [x] Alterar `ProductService.searchProducts()` para aplicar filtro por specifications (parcial/case-insensitive para texto)
-- [x] Remover testes antigos de filtro por `description`
-- [x] Teste unitário: filtro por spec válida com `type` informado
-- [x] Teste unitário: filtro por spec válida sem `type` informado
-- [x] Teste unitário: combinação de spec com outros filtros (name, priceMin, etc.)
-- [x] Teste controller: `?type=CELLPHONES&brand=Samsung` → produtos filtrados
+### 1.2 Controller Annotations
+- [x] Annotate `ProductController.java` — `@Operation`, `@ApiResponse`, `@Parameter` on all endpoints
+- [x] Annotate `TemplateController.java` — `@Operation`, `@ApiResponse` on all endpoints
 
-### 1.3 Validar specification keys no filtro
-- [x] Se `type` informado: validar spec keys contra template daquele type → 400 com specs válidas do type
-- [x] Se `type` não informado: validar contra `getAllSpecificationKeys()` → 400 se não existir em nenhum template
-- [x] Teste unitário: spec inválida com type → 400 + lista de specs válidas
-- [x] Teste unitário: spec inválida sem type → 400
-- [x] Teste controller: `?type=CELLPHONES&foo=bar` → 400
+### 1.3 Model Annotations (optional, improves docs)
+- [x] Add `@Schema` to `Product.java` fields
+- [x] Add `@Schema` / `@Parameter` to `ProductFilter.java`
+- [x] Add `@Schema` to `ErrorResponse.java`
 
-### Validação Fase 2
-- [x] `mvn clean test` — todos os testes passando
+### 1.4 Validation
+- [x] Swagger UI accessible at `http://localhost:8080/swagger-ui.html`
+- [x] OpenAPI spec accessible at `http://localhost:8080/api-docs`
+- [x] All endpoints listed with descriptions
+- [x] `mvn clean test` — all existing tests still passing
 
 ---
 
-## Fase 3 — GET /compare
+## 2. 🔐 API Key Security via Header _(2nd — low risk)_
 
-### 2.1 Validar IDs nulos/vazios/duplicados
-- [x] Validar que nenhum ID é `"null"`, vazio ou blank após parsing → `IllegalArgumentException` (400)
-- [x] Validar que não há IDs duplicados → `IllegalArgumentException` (400)
-- [x] Validar que restam ao menos 2 IDs após limpeza → `IllegalArgumentException` (400)
-- [x] Teste unitário (`ProductComparisonServiceTest`): `ids` com valor `"null"` → 400
-- [x] Teste unitário: IDs duplicados → 400
-- [x] Teste controller (`ProductComparisonControllerTest`): `?ids=1,,3` → 400
-- [x] Teste controller: `?ids=1,null,3` → 400
+### 2.1 Configuration
+- [x] Add `api.security.enabled=true` and `api.security.key=meli-product-api-key-2025` to `src/main/resources/application.properties`
+- [x] Add `api.security.enabled=false` to `src/test/resources/application.properties`
 
-### 2.2 Validar campos comparáveis nos `filters`
-- [x] Criar validação em `ProductService.compareProducts()`: após obter o type, checar cada filter contra `getComparableFields(type)`
-- [x] Se filter não é comparável → `IllegalArgumentException` com mensagem e lista de campos comparáveis
-- [x] Campos fixos `id` e `name` são ignorados na validação (sempre presentes)
-- [x] Teste unitário: filter comparável → sucesso
-- [x] Teste unitário: filter não comparável → 400 com campos comparáveis listados
-- [x] Teste controller: `?ids=1,2&filters=brand` (CELLPHONES) → 400
+### 2.2 Implementation
+- [x] Create `src/main/java/com/meli/productapi/config/ApiKeyInterceptor.java`
+  - Validates `X-API-KEY` header
+  - Bypasses `OPTIONS` requests (CORS preflight)
+  - Returns 401 `ErrorResponse` JSON if missing/invalid
+  - Respects `api.security.enabled` flag
+- [x] Create `src/main/java/com/meli/productapi/config/WebMvcConfig.java`
+  - Registers interceptor on `/api/**`
+  - Excludes `/swagger-ui/**`, `/api-docs/**`, `/swagger-ui.html`
+- [x] Add 401 handler to `GlobalExceptionHandler.java` (for `AccessDeniedException` or custom exception)
 
-### 2.3 Default filters baseados no template YAML
-- [x] Substituir `getDefaultFilters()` hardcoded por consulta a `getComparableFields(type)`
-- [x] Remover método `getDefaultFilters()` (ou torná-lo fallback)
-- [x] Teste unitário: compare sem filters → resposta contém apenas campos comparáveis do type
-- [x] Teste controller: `?ids=1,2` (sem filters) → resposta com campos comparáveis
+### 2.3 Tests
+- [x] Create `src/test/java/com/meli/productapi/config/ApiKeyInterceptorTest.java`:
+  - [x] `testValidApiKey_ShouldAllowRequest`
+  - [x] `testMissingApiKey_ShouldReturn401`
+  - [x] `testInvalidApiKey_ShouldReturn401`
+  - [x] `testOptionsRequest_ShouldBypass`
+  - [x] `testSecurityDisabled_ShouldAllowWithoutKey`
 
-### Validação Fase 3
-- [x] `mvn clean test` — todos os testes passando
+### 2.4 Validation
+- [x] `curl -H "X-API-KEY: meli-product-api-key-2025" http://localhost:8080/api/v1/products` → 200
+- [x] `curl http://localhost:8080/api/v1/products` → 401
+- [x] `curl -H "X-API-KEY: wrong-key" http://localhost:8080/api/v1/products` → 401
+- [x] `mvn clean test` — all tests passing (existing unaffected + 5 new)
 
 ---
 
-## Fase 4 — Validação Final
+## 3. 📄 Pagination Metadata on `GET /api/v1/products` _(3rd — medium risk)_
 
-- [x] `mvn clean test` — **168 testes passando** (sem regressões, +8 novos testes)
-- [ ] Testar manualmente via curl/Postman os cenários principais
-- [ ] Atualizar `copilot-instructions.md` se necessário (novos métodos, mudanças na API)
+### 3.1 New DTO
+- [x] Create `src/main/java/com/meli/productapi/model/PageResponse.java`
+  - Generic `PageResponse<T>` with: `content`, `page`, `pageSize`, `totalElements`, `totalPages`, `hasNext`, `hasPrevious`
+  - `of(List<T>, int page, int pageSize)` factory method
+  - `ofAll(List<T>)` factory method (non-paginated)
+  - Add `@Schema` annotations for Swagger
+
+### 3.2 Service & Controller Changes
+- [x] Update `ProductService.searchProducts()` to return `PageResponse<Product>`
+- [x] Remove or simplify private `applyPagination()` method
+- [x] Update `ProductController.getProducts()` to return `ResponseEntity<PageResponse<Product>>`
+
+### 3.3 Tests — New
+- [x] Create `src/test/java/com/meli/productapi/model/PageResponseTest.java`:
+  - [x] `testOfWithPagination_ShouldReturnCorrectMetadata`
+  - [x] `testOfWithPageBeyondTotal_ShouldReturnEmptyContent`
+  - [x] `testOfAll_ShouldReturnAllItemsWithSinglePage`
+  - [x] `testHasNext_ShouldBeTrueWhenMorePagesExist`
+  - [x] `testHasPrevious_ShouldBeTrueWhenNotFirstPage`
+  - [x] `testOfWithEmptyList_ShouldReturnEmptyPageResponse`
+
+### 3.4 Tests — Update Existing (~15-20 assertions)
+- [x] Update `ProductServiceTest.java` — `searchProducts()` now returns `PageResponse<Product>`
+- [x] Update `ProductControllerTest.java` — `jsonPath("$.content", ...)`, `jsonPath("$.totalElements", ...)`
+- [x] Update `ProductApiIntegrationTest.java` — same adjustments for new response format
+
+### 3.5 Validation
+- [x] `GET /api/v1/products` returns `PageResponse` wrapper (even without pagination params)
+- [x] `GET /api/v1/products?page=1&pageSize=2` returns correct metadata
+- [x] `hasNext` / `hasPrevious` are accurate
+- [x] `totalElements` and `totalPages` are accurate
+- [x] `mvn clean test` — all tests passing (modified + ~6 new)
+
+---
+
+## 4. 🏁 Final Validation
+
+- [x] `mvn clean test` — **all tests green** (existing + ~16 new) → **182 tests, 0 failures**
+- [x] Swagger UI shows all endpoints with descriptions + "Authorize" button for API Key
+- [x] API Key correctly blocks/allows requests
+- [x] Pagination metadata present and correct in all `GET /products` responses
+- [x] No regressions in any existing functionality

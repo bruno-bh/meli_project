@@ -1,5 +1,6 @@
 package com.meli.productapi.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,16 +17,19 @@ import java.util.Map;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Schema(description = "Query parameters for product search and pagination")
 public class ProductFilter {
     
     /**
      * Filter by product name (partial, case-insensitive search)
      */
+    @Schema(description = "Partial, case-insensitive product name search", example = "iPhone")
     private String name;
     
     /**
      * Filter by product type (exact match)
      */
+    @Schema(description = "Exact product type match", example = "CELLPHONES")
     private String type;
     
     /**
@@ -36,24 +40,28 @@ public class ProductFilter {
     /**
      * Minimum price (must be greater than zero)
      */
+    @Schema(description = "Minimum price (inclusive, >= 1)", example = "100")
     @Min(value = 1, message = "Minimum price must be greater than zero")
     private Double priceMin;
     
     /**
      * Maximum price (must be greater than zero)
      */
+    @Schema(description = "Maximum price (inclusive, >= 1)", example = "5000")
     @Min(value = 1, message = "Maximum price must be greater than zero")
     private Double priceMax;
     
     /**
      * Page number (must be greater than or equal to 1)
      */
+    @Schema(description = "Page number (>= 1)", example = "1")
     @Min(value = 1, message = "Page number must be greater than or equal to 1")
     private Integer page;
     
     /**
      * Page size (must be greater than zero)
      */
+    @Schema(description = "Items per page (>= 1)", example = "10")
     @Min(value = 1, message = "Page size must be greater than zero")
     private Integer pageSize;
     

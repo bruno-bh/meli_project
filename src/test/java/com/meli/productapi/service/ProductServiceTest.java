@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.stream.Stream;
 
+import com.meli.productapi.model.PageResponse;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -127,10 +128,10 @@ class ProductServiceTest {
         when(repository.findAll()).thenReturn(products);
 
         ProductFilter filter = ProductFilter.builder().build();
-        List<Product> result = productService.searchProducts(filter);
+        PageResponse<Product> result = productService.searchProducts(filter);
 
-        assertEquals(1, result.size());
-        assertEquals(testProduct.getName(), result.get(0).getName());
+        assertEquals(1, result.getContent().size());
+        assertEquals(testProduct.getName(), result.getContent().get(0).getName());
         verify(repository, times(1)).findAll();
     }
 
@@ -422,11 +423,11 @@ class ProductServiceTest {
                 .name("iPhone")
                 .type("CELLPHONES")
                 .build();
-        List<Product> result = productService.searchProducts(filter);
+        PageResponse<Product> result = productService.searchProducts(filter);
 
-        assertEquals(2, result.size());
-        assertTrue(result.stream().allMatch(p -> p.getType().equals("CELLPHONES")));
-        assertTrue(result.stream().allMatch(p -> p.getName().contains("iPhone")));
+        assertEquals(2, result.getContent().size());
+        assertTrue(result.getContent().stream().allMatch(p -> p.getType().equals("CELLPHONES")));
+        assertTrue(result.getContent().stream().allMatch(p -> p.getName().contains("iPhone")));
         verify(repository, times(1)).findAll();
     }
 
@@ -455,10 +456,10 @@ class ProductServiceTest {
         ProductFilter filter = ProductFilter.builder()
                 .name("Samsung")
                 .build();
-        List<Product> result = productService.searchProducts(filter);
+        PageResponse<Product> result = productService.searchProducts(filter);
 
-        assertEquals(2, result.size());
-        assertTrue(result.stream().allMatch(p -> p.getName().contains("Samsung")));
+        assertEquals(2, result.getContent().size());
+        assertTrue(result.getContent().stream().allMatch(p -> p.getName().contains("Samsung")));
         verify(repository, times(1)).findAll();
     }
 
@@ -486,10 +487,10 @@ class ProductServiceTest {
         ProductFilter filter = ProductFilter.builder()
                 .type("CELLPHONES")
                 .build();
-        List<Product> result = productService.searchProducts(filter);
+        PageResponse<Product> result = productService.searchProducts(filter);
 
-        assertEquals(2, result.size());
-        assertTrue(result.stream().allMatch(p -> p.getType().equals("CELLPHONES")));
+        assertEquals(2, result.getContent().size());
+        assertTrue(result.getContent().stream().allMatch(p -> p.getType().equals("CELLPHONES")));
         verify(repository, times(1)).findAll();
     }
 
@@ -539,10 +540,10 @@ class ProductServiceTest {
                 .type("CELLPHONES")
                 .specifications(Map.of("brand", "Samsung"))
                 .build();
-        List<Product> result = productService.searchProducts(filter);
+        PageResponse<Product> result = productService.searchProducts(filter);
 
-        assertEquals(1, result.size());
-        assertEquals("Samsung Galaxy", result.get(0).getName());
+        assertEquals(1, result.getContent().size());
+        assertEquals("Samsung Galaxy", result.getContent().get(0).getName());
     }
 
     @Test
@@ -571,10 +572,10 @@ class ProductServiceTest {
         ProductFilter filter = ProductFilter.builder()
                 .specifications(Map.of("brand", "Apple"))
                 .build();
-        List<Product> result = productService.searchProducts(filter);
+        PageResponse<Product> result = productService.searchProducts(filter);
 
-        assertEquals(1, result.size());
-        assertEquals("iPhone 15", result.get(0).getName());
+        assertEquals(1, result.getContent().size());
+        assertEquals("iPhone 15", result.getContent().get(0).getName());
     }
 
     @Test
@@ -615,10 +616,10 @@ class ProductServiceTest {
                 .specifications(Map.of("brand", "Apple"))
                 .priceMin(800.0)
                 .build();
-        List<Product> result = productService.searchProducts(filter);
+        PageResponse<Product> result = productService.searchProducts(filter);
 
-        assertEquals(1, result.size());
-        assertEquals("iPhone 15", result.get(0).getName());
+        assertEquals(1, result.getContent().size());
+        assertEquals("iPhone 15", result.getContent().get(0).getName());
     }
 
     @Test
@@ -673,9 +674,9 @@ class ProductServiceTest {
                 .name("iPhone")
                 .type("CELLPHONES")
                 .build();
-        List<Product> result = productService.searchProducts(filter);
+        PageResponse<Product> result = productService.searchProducts(filter);
 
-        assertEquals(0, result.size());
+        assertEquals(0, result.getContent().size());
         verify(repository, times(1)).findAll();
     }
 
@@ -710,10 +711,10 @@ class ProductServiceTest {
                 .priceMin(700.0)
                 .priceMax(1000.0)
                 .build();
-        List<Product> result = productService.searchProducts(filter);
+        PageResponse<Product> result = productService.searchProducts(filter);
 
-        assertEquals(2, result.size());
-        assertTrue(result.stream().allMatch(p -> p.getPrice().getValue() >= 700.0 && p.getPrice().getValue() <= 1000.0));
+        assertEquals(2, result.getContent().size());
+        assertTrue(result.getContent().stream().allMatch(p -> p.getPrice().getValue() >= 700.0 && p.getPrice().getValue() <= 1000.0));
         verify(repository, times(1)).findAll();
     }
 
@@ -735,29 +736,29 @@ class ProductServiceTest {
                 .page(1)
                 .pageSize(2)
                 .build();
-        List<Product> page1 = productService.searchProducts(filter1);
-        assertEquals(2, page1.size());
-        assertEquals("P1", page1.get(0).getName());
-        assertEquals("P2", page1.get(1).getName());
+        PageResponse<Product> page1 = productService.searchProducts(filter1);
+        assertEquals(2, page1.getContent().size());
+        assertEquals("P1", page1.getContent().get(0).getName());
+        assertEquals("P2", page1.getContent().get(1).getName());
 
         // Page 2, size 2
         ProductFilter filter2 = ProductFilter.builder()
                 .page(2)
                 .pageSize(2)
                 .build();
-        List<Product> page2 = productService.searchProducts(filter2);
-        assertEquals(2, page2.size());
-        assertEquals("P3", page2.get(0).getName());
-        assertEquals("P4", page2.get(1).getName());
+        PageResponse<Product> page2 = productService.searchProducts(filter2);
+        assertEquals(2, page2.getContent().size());
+        assertEquals("P3", page2.getContent().get(0).getName());
+        assertEquals("P4", page2.getContent().get(1).getName());
 
         // Page 3, size 2
         ProductFilter filter3 = ProductFilter.builder()
                 .page(3)
                 .pageSize(2)
                 .build();
-        List<Product> page3 = productService.searchProducts(filter3);
-        assertEquals(1, page3.size());
-        assertEquals("P5", page3.get(0).getName());
+        PageResponse<Product> page3 = productService.searchProducts(filter3);
+        assertEquals(1, page3.getContent().size());
+        assertEquals("P5", page3.getContent().get(0).getName());
     }
 
     @Test
@@ -772,9 +773,9 @@ class ProductServiceTest {
         when(repository.findAll()).thenReturn(products);
 
         ProductFilter filter = ProductFilter.builder().build();
-        List<Product> result = productService.searchProducts(filter);
+        PageResponse<Product> result = productService.searchProducts(filter);
 
-        assertEquals(3, result.size());
+        assertEquals(3, result.getContent().size());
         verify(repository, times(1)).findAll();
     }
 
@@ -792,9 +793,9 @@ class ProductServiceTest {
                 .page(10)
                 .pageSize(2)
                 .build();
-        List<Product> result = productService.searchProducts(filter);
+        PageResponse<Product> result = productService.searchProducts(filter);
 
-        assertEquals(0, result.size());
+        assertEquals(0, result.getContent().size());
         verify(repository, times(1)).findAll();
     }
 
@@ -868,9 +869,9 @@ class ProductServiceTest {
                 .priceMin(50.0)
                 .priceMax(1000.0)
                 .build();
-        List<Product> result = productService.searchProducts(filter);
+        PageResponse<Product> result = productService.searchProducts(filter);
 
-        assertEquals(2, result.size());
+        assertEquals(2, result.getContent().size());
         verify(repository, times(1)).findAll();
     }
 
@@ -910,11 +911,11 @@ class ProductServiceTest {
         ProductFilter filter = ProductFilter.builder()
                 .pageSize(2)
                 .build();
-        List<Product> result = productService.searchProducts(filter);
+        PageResponse<Product> result = productService.searchProducts(filter);
 
-        assertEquals(2, result.size());
-        assertEquals("P1", result.get(0).getName());
-        assertEquals("P2", result.get(1).getName());
+        assertEquals(2, result.getContent().size());
+        assertEquals("P1", result.getContent().get(0).getName());
+        assertEquals("P2", result.getContent().get(1).getName());
     }
 
     @Test
@@ -931,17 +932,17 @@ class ProductServiceTest {
                 .page(0)
                 .pageSize(2)
                 .build();
-        List<Product> resultZero = productService.searchProducts(filterZero);
-        assertEquals(2, resultZero.size());
-        assertEquals("P1", resultZero.get(0).getName());
+        PageResponse<Product> resultZero = productService.searchProducts(filterZero);
+        assertEquals(2, resultZero.getContent().size());
+        assertEquals("P1", resultZero.getContent().get(0).getName());
 
         ProductFilter filterNegative = ProductFilter.builder()
                 .page(-1)
                 .pageSize(2)
                 .build();
-        List<Product> resultNegative = productService.searchProducts(filterNegative);
-        assertEquals(2, resultNegative.size());
-        assertEquals("P1", resultNegative.get(0).getName());
+        PageResponse<Product> resultNegative = productService.searchProducts(filterNegative);
+        assertEquals(2, resultNegative.getContent().size());
+        assertEquals("P1", resultNegative.getContent().get(0).getName());
     }
 
     @Test

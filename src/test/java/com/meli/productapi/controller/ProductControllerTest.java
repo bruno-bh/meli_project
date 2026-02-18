@@ -3,6 +3,7 @@ package com.meli.productapi.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.meli.productapi.model.MeasurableValue;
 import com.meli.productapi.model.Product;
+import com.meli.productapi.model.PageResponse;
 import com.meli.productapi.model.ProductFilter;
 import com.meli.productapi.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;
@@ -72,13 +73,14 @@ class ProductControllerTest {
     void testGetAllProducts() throws Exception {
         List<Product> products = List.of(testProduct);
         when(productService.searchProducts(any(ProductFilter.class)))
-                .thenReturn(products);
+                .thenReturn(PageResponse.ofAll(products));
 
         mockMvc.perform(get("/api/v1/products"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$[0].id").value("123"))
-                .andExpect(jsonPath("$[0].name").value("Produto Teste"));
+                .andExpect(jsonPath("$.content[0].id").value("123"))
+                .andExpect(jsonPath("$.content[0].name").value("Produto Teste"))
+                .andExpect(jsonPath("$.totalElements").value(1));
 
         verify(productService, times(1))
                 .searchProducts(any(ProductFilter.class));
@@ -205,16 +207,16 @@ class ProductControllerTest {
 
         List<Product> searchResults = List.of(product1, product2);
         when(productService.searchProducts(any(ProductFilter.class)))
-                .thenReturn(searchResults);
+                .thenReturn(PageResponse.ofAll(searchResults));
 
         mockMvc.perform(get("/api/v1/products")
                 .param("name", "iPhone")
                 .param("type", "CELLPHONES"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$[0].name").value("iPhone 14"))
-                .andExpect(jsonPath("$[1].name").value("iPhone 15"))
-                .andExpect(jsonPath("$[0].type").value("CELLPHONES"));
+                .andExpect(jsonPath("$.content[0].name").value("iPhone 14"))
+                .andExpect(jsonPath("$.content[1].name").value("iPhone 15"))
+                .andExpect(jsonPath("$.content[0].type").value("CELLPHONES"));
 
         verify(productService, times(1))
                 .searchProducts(any(ProductFilter.class));
@@ -233,12 +235,12 @@ class ProductControllerTest {
 
         List<Product> searchResults = List.of(product);
         when(productService.searchProducts(any(ProductFilter.class)))
-                .thenReturn(searchResults);
+                .thenReturn(PageResponse.ofAll(searchResults));
 
         mockMvc.perform(get("/api/v1/products")
                 .param("name", "Samsung"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("Samsung Galaxy"));
+                .andExpect(jsonPath("$.content[0].name").value("Samsung Galaxy"));
 
         verify(productService, times(1))
                 .searchProducts(any(ProductFilter.class));
@@ -256,13 +258,13 @@ class ProductControllerTest {
 
         List<Product> searchResults = List.of(product);
         when(productService.searchProducts(any(ProductFilter.class)))
-                .thenReturn(searchResults);
+                .thenReturn(PageResponse.ofAll(searchResults));
 
         mockMvc.perform(get("/api/v1/products")
                 .param("type", "CELLPHONES")
                 .param("brand", "Samsung"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("Samsung Galaxy"));
+                .andExpect(jsonPath("$.content[0].name").value("Samsung Galaxy"));
 
         verify(productService, times(1))
                 .searchProducts(any(ProductFilter.class));
@@ -311,13 +313,13 @@ class ProductControllerTest {
 
         List<Product> searchResults = List.of(product);
         when(productService.searchProducts(any(ProductFilter.class)))
-                .thenReturn(searchResults);
+                .thenReturn(PageResponse.ofAll(searchResults));
 
         mockMvc.perform(get("/api/v1/products")
                 .param("priceMin", "700.0")
                 .param("priceMax", "1000.0"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].price.value").value(999.99));
+                .andExpect(jsonPath("$.content[0].price.value").value(999.99));
 
         verify(productService, times(1))
                 .searchProducts(any(ProductFilter.class));
@@ -328,13 +330,13 @@ class ProductControllerTest {
     void testSearchProductsWithPagination() throws Exception {
         List<Product> products = List.of(testProduct);
         when(productService.searchProducts(any(ProductFilter.class)))
-                .thenReturn(products);
+                .thenReturn(PageResponse.of(products, 1, 10));
 
         mockMvc.perform(get("/api/v1/products")
                 .param("page", "1")
                 .param("pageSize", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value("123"));
+                .andExpect(jsonPath("$.content[0].id").value("123"));
 
         verify(productService, times(1))
                 .searchProducts(any(ProductFilter.class));

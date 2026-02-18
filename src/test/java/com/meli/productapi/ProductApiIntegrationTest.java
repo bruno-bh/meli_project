@@ -206,7 +206,8 @@ class ProductApiIntegrationTest {
         // List all products
         mockMvc.perform(get("/api/v1/products"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", org.hamcrest.Matchers.notNullValue()));
+                .andExpect(jsonPath("$.content", org.hamcrest.Matchers.notNullValue()))
+                .andExpect(jsonPath("$.totalElements").value(3));
     }
 
     @Test
