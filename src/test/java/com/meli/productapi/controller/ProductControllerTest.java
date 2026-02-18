@@ -1,12 +1,15 @@
 package com.meli.productapi.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.meli.productapi.model.MeasurableValue;
 import com.meli.productapi.model.Product;
 import com.meli.productapi.model.ProductFilter;
 import com.meli.productapi.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -22,7 +25,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ProductController.class)
-@DisplayName("Testes do ProductController")
+@DisplayName("ProductController — REST endpoint tests")
 class ProductControllerTest {
 
     @Autowired
@@ -36,24 +39,36 @@ class ProductControllerTest {
 
     private Product testProduct;
 
+    private static MeasurableValue price(Double value) {
+        return MeasurableValue.builder().value(value).unit("BRL").build();
+    }
+
+    private static MeasurableValue size(Double value, String unit) {
+        return MeasurableValue.builder().value(value).unit(unit).build();
+    }
+
+    private static MeasurableValue weight(Double value) {
+        return MeasurableValue.builder().value(value).unit("kg").build();
+    }
+
     @BeforeEach
     void setUp() {
         testProduct = Product.builder()
                 .id("123")
                 .name("Produto Teste")
                 .description("Descrição do teste")
-                .price(99.99)
-                .size("M")
-                .weight(1.5)
+                .price(price(99.99))
+                .size(size(null, "M"))
+                .weight(weight(1.5))
                 .color("Vermelho")
-                .type("ELETRÔNICOS")
+                .type("CELLPHONES")
                 .rating(4.3)
                 .specifications(new HashMap<>(Map.of("marca", "Samsung")))
                 .build();
     }
 
     @Test
-    @DisplayName("GET /api/v1/products - Deve retornar lista de produtos sem filtros")
+    @DisplayName("GET /api/v1/products — should return product list without filters")
     void testGetAllProducts() throws Exception {
         List<Product> products = List.of(testProduct);
         when(productService.searchProducts(any(ProductFilter.class)))
@@ -70,7 +85,7 @@ class ProductControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/products/{id} - Deve retornar produto por ID")
+    @DisplayName("GET /api/v1/products/{id} — should return product by ID")
     void testGetProductById() throws Exception {
         when(productService.getProductById("123")).thenReturn(testProduct);
 
@@ -79,28 +94,28 @@ class ProductControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.id").value("123"))
                 .andExpect(jsonPath("$.name").value("Produto Teste"))
-                .andExpect(jsonPath("$.price").value(99.99));
+                .andExpect(jsonPath("$.price.value").value(99.99));
 
         verify(productService, times(1)).getProductById("123");
     }
 
     @Test
-    @DisplayName("POST /api/v1/products - Deve criar novo produto")
+    @DisplayName("POST /api/v1/products — should create a new product")
     void testCreateProduct() throws Exception {
         Product newProduct = Product.builder()
                 .name("Novo Produto")
                 .description("Descrição nova")
-                .price(150.0)
-                .size("G")
-                .weight(2.0)
+                .price(price(150.0))
+                .size(size(null, "G"))
+                .weight(weight(2.0))
                 .color("Azul")
-                .type("ROUPAS")
+                .type("CLOTHING")
                 .rating(4.0)
                 .specifications(new HashMap<>(Map.of("tamanho", "XL")))
                 .build();
 
         testProduct.setName("Novo Produto");
-        testProduct.setPrice(150.0);
+        testProduct.setPrice(price(150.0));
 
         when(productService.createProduct(any(Product.class))).thenReturn(testProduct);
 
@@ -109,28 +124,28 @@ class ProductControllerTest {
                 .content(objectMapper.writeValueAsString(newProduct)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Novo Produto"))
-                .andExpect(jsonPath("$.price").value(150.0));
+                .andExpect(jsonPath("$.price.value").value(150.0));
 
         verify(productService, times(1)).createProduct(any(Product.class));
     }
 
     @Test
-    @DisplayName("PUT /api/v1/products/{id} - Deve atualizar produto")
+    @DisplayName("PUT /api/v1/products/{id} — should update a product")
     void testUpdateProduct() throws Exception {
         Product updateData = Product.builder()
                 .name("Produto Atualizado")
                 .description("Descrição atualizada")
-                .price(120.0)
-                .size("M")
-                .weight(1.8)
+                .price(price(120.0))
+                .size(size(null, "M"))
+                .weight(weight(1.8))
                 .color("Preto")
-                .type("ELETRÔNICOS")
+                .type("CELLPHONES")
                 .rating(4.5)
                 .specifications(new HashMap<>(Map.of("versao", "2024")))
                 .build();
 
         testProduct.setName("Produto Atualizado");
-        testProduct.setPrice(120.0);
+        testProduct.setPrice(price(120.0));
 
         when(productService.updateProduct(eq("123"), any(Product.class)))
                 .thenReturn(testProduct);
@@ -140,13 +155,13 @@ class ProductControllerTest {
                 .content(objectMapper.writeValueAsString(updateData)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Produto Atualizado"))
-                .andExpect(jsonPath("$.price").value(120.0));
+                .andExpect(jsonPath("$.price.value").value(120.0));
 
         verify(productService, times(1)).updateProduct(eq("123"), any(Product.class));
     }
 
     @Test
-    @DisplayName("DELETE /api/v1/products/{id} - Deve deletar produto")
+    @DisplayName("DELETE /api/v1/products/{id} — should delete a product")
     void testDeleteProduct() throws Exception {
         doNothing().when(productService).deleteProduct("123");
 
@@ -157,7 +172,7 @@ class ProductControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/products/stats/count - Deve retornar total de produtos")
+    @DisplayName("GET /api/v1/products/stats/count — should return total product count")
     void testGetTotalProducts() throws Exception {
         when(productService.getTotalProducts()).thenReturn(5L);
 
@@ -170,13 +185,13 @@ class ProductControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/products - Deve buscar produtos por nome e tipo")
+    @DisplayName("GET /api/v1/products — should search products by name and type")
     void testSearchProducts() throws Exception {
         Product product1 = Product.builder()
                 .id("1")
                 .name("iPhone 14")
                 .type("CELLPHONES")
-                .price(999.99)
+                .price(price(999.99))
                 .description("Smartphone Apple")
                 .build();
 
@@ -184,7 +199,7 @@ class ProductControllerTest {
                 .id("2")
                 .name("iPhone 15")
                 .type("CELLPHONES")
-                .price(1099.99)
+                .price(price(1099.99))
                 .description("Smartphone Apple")
                 .build();
 
@@ -206,13 +221,13 @@ class ProductControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/products - Deve buscar apenas por nome")
+    @DisplayName("GET /api/v1/products — should search products by name only")
     void testSearchProductsByNameOnly() throws Exception {
         Product product = Product.builder()
                 .id("1")
                 .name("Samsung Galaxy")
                 .type("CELLPHONES")
-                .price(799.99)
+                .price(price(799.99))
                 .description("Smartphone Samsung")
                 .build();
 
@@ -230,14 +245,13 @@ class ProductControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/products - Deve buscar por descrição")
-    void testSearchProductsByDescription() throws Exception {
+    @DisplayName("GET /api/v1/products — should filter products by specification")
+    void testSearchProductsBySpecification() throws Exception {
         Product product = Product.builder()
                 .id("1")
-                .name("iPhone 14")
+                .name("Samsung Galaxy")
                 .type("CELLPHONES")
-                .price(999.99)
-                .description("Smartphone Apple")
+                .price(price(799.99))
                 .build();
 
         List<Product> searchResults = List.of(product);
@@ -245,22 +259,54 @@ class ProductControllerTest {
                 .thenReturn(searchResults);
 
         mockMvc.perform(get("/api/v1/products")
-                .param("description", "Apple"))
+                .param("type", "CELLPHONES")
+                .param("brand", "Samsung"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].description").value("Smartphone Apple"));
+                .andExpect(jsonPath("$[0].name").value("Samsung Galaxy"));
 
         verify(productService, times(1))
                 .searchProducts(any(ProductFilter.class));
     }
 
     @Test
-    @DisplayName("GET /api/v1/products - Deve buscar por faixa de preço")
+    @DisplayName("GET /api/v1/products — should return 400 when type is invalid")
+    void testSearchProductsWithInvalidType() throws Exception {
+        when(productService.searchProducts(any(ProductFilter.class)))
+                .thenThrow(new IllegalArgumentException(
+                        "Invalid product type: 'XPTO'. Valid types: [CELLPHONES, COMPUTERS, CLOTHING]"));
+
+        mockMvc.perform(get("/api/v1/products")
+                .param("type", "XPTO"))
+                .andExpect(status().isBadRequest());
+
+        verify(productService, times(1))
+                .searchProducts(any(ProductFilter.class));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/products — should return 400 when spec key is invalid for type")
+    void testSearchProductsWithInvalidSpecKey() throws Exception {
+        when(productService.searchProducts(any(ProductFilter.class)))
+                .thenThrow(new IllegalArgumentException(
+                        "Invalid specification key 'foo' for product type 'CELLPHONES'."));
+
+        mockMvc.perform(get("/api/v1/products")
+                .param("type", "CELLPHONES")
+                .param("foo", "bar"))
+                .andExpect(status().isBadRequest());
+
+        verify(productService, times(1))
+                .searchProducts(any(ProductFilter.class));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/products — should search products by price range")
     void testSearchProductsByPriceRange() throws Exception {
         Product product = Product.builder()
                 .id("1")
                 .name("iPhone 14")
                 .type("CELLPHONES")
-                .price(999.99)
+                .price(price(999.99))
                 .build();
 
         List<Product> searchResults = List.of(product);
@@ -271,14 +317,14 @@ class ProductControllerTest {
                 .param("priceMin", "700.0")
                 .param("priceMax", "1000.0"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].price").value(999.99));
+                .andExpect(jsonPath("$[0].price.value").value(999.99));
 
         verify(productService, times(1))
                 .searchProducts(any(ProductFilter.class));
     }
 
     @Test
-    @DisplayName("GET /api/v1/products - Deve buscar com paginação")
+    @DisplayName("GET /api/v1/products — should search products with pagination")
     void testSearchProductsWithPagination() throws Exception {
         List<Product> products = List.of(testProduct);
         when(productService.searchProducts(any(ProductFilter.class)))
@@ -295,16 +341,16 @@ class ProductControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/v1/products - Deve retornar 400 quando name é null")
+    @DisplayName("POST /api/v1/products — should return 400 when name is null")
     void testCreateProductWithNullName() throws Exception {
         Product invalidProduct = Product.builder()
                 .name(null)
-                .price(99.99)
+                .price(price(99.99))
                 .type("CELLPHONES")
                 .build();
 
         when(productService.createProduct(any(Product.class)))
-                .thenThrow(new IllegalArgumentException("Nome do produto é obrigatório"));
+                .thenThrow(new IllegalArgumentException("Product name is required"));
 
         mockMvc.perform(post("/api/v1/products")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -315,7 +361,7 @@ class ProductControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/products - Deve retornar 400 quando pageSize é zero")
+    @DisplayName("GET /api/v1/products — should return 400 when pageSize is zero")
     void testSearchProductsWithZeroPageSize() throws Exception {
         mockMvc.perform(get("/api/v1/products")
                 .param("page", "1")
@@ -324,7 +370,7 @@ class ProductControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/products - Deve retornar 400 quando pageSize é negativo")
+    @DisplayName("GET /api/v1/products — should return 400 when pageSize is negative")
     void testSearchProductsWithNegativePageSize() throws Exception {
         mockMvc.perform(get("/api/v1/products")
                 .param("page", "1")
@@ -333,7 +379,7 @@ class ProductControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/products - Deve retornar 400 quando priceMin é zero")
+    @DisplayName("GET /api/v1/products — should return 400 when priceMin is zero")
     void testSearchProductsWithZeroPriceMin() throws Exception {
         mockMvc.perform(get("/api/v1/products")
                 .param("priceMin", "0"))
@@ -341,7 +387,7 @@ class ProductControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/products - Deve retornar 400 quando priceMax é negativo")
+    @DisplayName("GET /api/v1/products — should return 400 when priceMax is negative")
     void testSearchProductsWithNegativePriceMax() throws Exception {
         mockMvc.perform(get("/api/v1/products")
                 .param("priceMax", "-10"))
@@ -349,7 +395,7 @@ class ProductControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/products - Deve retornar 400 quando priceMax < priceMin")
+    @DisplayName("GET /api/v1/products — should return 400 when priceMax < priceMin")
     void testSearchProductsWithMaxLessThanMin() throws Exception {
         mockMvc.perform(get("/api/v1/products")
                 .param("priceMin", "1000")
@@ -357,40 +403,22 @@ class ProductControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
-    @Test
-    @DisplayName("GET /api/v1/products - Deve retornar 400 quando page é string")
-    void testSearchProductsWithInvalidPageType() throws Exception {
+    @ParameterizedTest(name = "GET /api/v1/products — should return 400 when {0} is a non-numeric string: ''{1}''")
+    @CsvSource({
+            "page, abc",
+            "pageSize, xyz",
+            "priceMin, invalido",
+            "priceMax, invalido"
+    })
+    @DisplayName("GET /api/v1/products — should return 400 for non-numeric query params")
+    void testSearchProductsWithInvalidParamType(String paramName, String paramValue) throws Exception {
         mockMvc.perform(get("/api/v1/products")
-                .param("page", "abc"))
+                .param(paramName, paramValue))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
-    @DisplayName("GET /api/v1/products - Deve retornar 400 quando pageSize é string")
-    void testSearchProductsWithInvalidPageSizeType() throws Exception {
-        mockMvc.perform(get("/api/v1/products")
-                .param("pageSize", "xyz"))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @DisplayName("GET /api/v1/products - Deve retornar 400 quando priceMin é string")
-    void testSearchProductsWithInvalidPriceMinType() throws Exception {
-        mockMvc.perform(get("/api/v1/products")
-                .param("priceMin", "invalido"))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @DisplayName("GET /api/v1/products - Deve retornar 400 quando priceMax é string")
-    void testSearchProductsWithInvalidPriceMaxType() throws Exception {
-        mockMvc.perform(get("/api/v1/products")
-                .param("priceMax", "invalido"))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @DisplayName("GET /api/v1/products - Deve retornar 400 quando page é menor que 1")
+    @DisplayName("GET /api/v1/products — should return 400 when page is less than 1")
     void testSearchProductsWithPageLessThanOne() throws Exception {
         mockMvc.perform(get("/api/v1/products")
                 .param("page", "0"))
@@ -398,15 +426,7 @@ class ProductControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/products - Deve retornar 400 quando pageSize é menor ou igual a 0")
-    void testSearchProductsWithPageSizeZero() throws Exception {
-        mockMvc.perform(get("/api/v1/products")
-                .param("pageSize", "0"))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @DisplayName("POST /api/v1/products - Deve retornar 400 quando price é null")
+    @DisplayName("POST /api/v1/products — should return 400 when price is null")
     void testCreateProductWithNullPrice() throws Exception {
         Product invalidProduct = Product.builder()
                 .name("Produto Teste")
@@ -415,7 +435,7 @@ class ProductControllerTest {
                 .build();
 
         when(productService.createProduct(any(Product.class)))
-                .thenThrow(new IllegalArgumentException("Preço do produto deve ser um valor positivo"));
+                .thenThrow(new IllegalArgumentException("Product price must be a positive value greater than zero"));
 
         mockMvc.perform(post("/api/v1/products")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -426,16 +446,16 @@ class ProductControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/v1/products - Deve retornar 400 quando type é null")
+    @DisplayName("POST /api/v1/products — should return 400 when type is null")
     void testCreateProductWithNullType() throws Exception {
         Product invalidProduct = Product.builder()
                 .name("Produto Teste")
-                .price(99.99)
+                .price(price(99.99))
                 .type(null)
                 .build();
 
         when(productService.createProduct(any(Product.class)))
-                .thenThrow(new IllegalArgumentException("Tipo do produto é obrigatório"));
+                .thenThrow(new IllegalArgumentException("Product type is required"));
 
         mockMvc.perform(post("/api/v1/products")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -443,4 +463,5 @@ class ProductControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(productService, times(1)).createProduct(any(Product.class));
-    }}
+    }
+}

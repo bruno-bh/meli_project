@@ -1,8 +1,11 @@
 package com.meli.productapi.repository;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.meli.productapi.model.Product;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import java.io.File;
@@ -11,13 +14,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.locks.ReentrantLock;
 
+@Slf4j
 @Repository
-public class ProductRepository {
+public class ProductRepository implements ProductRepositoryInterface {
 
-    private static final String DATA_DIR = "data";
-    private static final String PRODUCTS_FILE = "data/products.json";
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final String dataDir;
+    private final String productsFile;
+    private final ObjectMapper objectMapper;
+    private final ReentrantLock lock = new ReentrantLock();
     private static final String[] IMAGE_DOMAINS = {
         "https://picsum.photos",
         "https://via.placeholder.com",
@@ -27,35 +34,49 @@ public class ProductRepository {
         "technology", "fashion", "food", "furniture", "sports", "random"
     };
 
-    public ProductRepository() {
+    public ProductRepository(
+            @Value("${product.data.dir:data}") String dataDir,
+            @Value("${product.data.file:data/products.json}") String productsFile,
+            ObjectMapper objectMapper) {
+        this.dataDir = dataDir;
+        this.productsFile = productsFile;
+        this.objectMapper = objectMapper.copy();
+        this.objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        log.info("Initializing ProductRepository with data file: {}", productsFile);
         initializeDataDir();
     }
 
     private void initializeDataDir() {
         try {
-            Path path = Paths.get(DATA_DIR);
+            Path path = Paths.get(dataDir);
             if (!Files.exists(path)) {
                 Files.createDirectory(path);
+                log.info("Data directory created: {}", dataDir);
             }
             
-            File productsFile = new File(PRODUCTS_FILE);
-            if (!productsFile.exists()) {
-                objectMapper.writeValue(productsFile, new ArrayList<Product>());
+            File file = new File(productsFile);
+            if (!file.exists()) {
+                objectMapper.writeValue(file, new ArrayList<Product>());
+                log.info("Products file created: {}", productsFile);
             }
         } catch (IOException e) {
-            throw new RuntimeException("Erro ao inicializar diretório de dados", e);
+            log.error("Error initializing data directory: {}", e.getMessage());
+            throw new RuntimeException("Error initializing data directory", e);
         }
     }
 
     public List<Product> findAll() {
         try {
-            File file = new File(PRODUCTS_FILE);
+            File file = new File(productsFile);
             if (!file.exists()) {
                 return new ArrayList<>();
             }
-            return objectMapper.readValue(file, new TypeReference<List<Product>>() {});
+            List<Product> products = objectMapper.readValue(file, new TypeReference<List<Product>>() {});
+            log.debug("Loaded {} products from file", products.size());
+            return products;
         } catch (IOException e) {
-            throw new RuntimeException("Erro ao ler produtos do banco de dados", e);
+            log.error("Error reading products: {}", e.getMessage());
+            throw new RuntimeException("Error reading products from data file", e);
         }
     }
 
@@ -66,11 +87,12 @@ public class ProductRepository {
     }
 
     public Product save(Product product) {
+        lock.lock();
         try {
             List<Product> products = findAll();
             
             if (product.getId() == null || product.getId().isEmpty()) {
-                // Gerar ID incremental
+                // Generate incremental ID
                 long nextId = products.stream()
                     .mapToLong(p -> {
                         try {
@@ -82,14 +104,15 @@ public class ProductRepository {
                     .max()
                     .orElse(0L) + 1;
                 product.setId(String.valueOf(nextId));
+                log.debug("Auto-generated ID: {}", product.getId());
             }
             
-            // Gerar imageUrl aleatória se não tiver
+            // Generate random imageUrl if not set
             if (product.getImageUrl() == null || product.getImageUrl().isEmpty()) {
                 product.setImageUrl(generateRandomImageUrl());
             }
             
-            // Definir rating padrão se não tiver
+            // Set default rating if not set
             if (product.getRating() == null) {
                 product.setRating(0.0);
             }
@@ -97,20 +120,29 @@ public class ProductRepository {
             products.removeIf(p -> p.getId().equals(product.getId()));
             products.add(product);
             
-            objectMapper.writeValue(new File(PRODUCTS_FILE), products);
+            objectMapper.writeValue(new File(productsFile), products);
+            log.debug("Product saved with ID: {}", product.getId());
             return product;
         } catch (IOException e) {
-            throw new RuntimeException("Erro ao salvar produto", e);
+            log.error("Error saving product: {}", e.getMessage());
+            throw new RuntimeException("Error saving product", e);
+        } finally {
+            lock.unlock();
         }
     }
 
     public void deleteById(String id) {
+        lock.lock();
         try {
             List<Product> products = findAll();
             products.removeIf(product -> product.getId().equals(id));
-            objectMapper.writeValue(new File(PRODUCTS_FILE), products);
+            objectMapper.writeValue(new File(productsFile), products);
+            log.debug("Product deleted with ID: {}", id);
         } catch (IOException e) {
-            throw new RuntimeException("Erro ao deletar produto", e);
+            log.error("Error deleting product ID {}: {}", id, e.getMessage());
+            throw new RuntimeException("Error deleting product", e);
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -119,17 +151,19 @@ public class ProductRepository {
     }
 
     public long count() {
-        return findAll().size();
+        long total = findAll().size();
+        log.debug("Total product count: {}", total);
+        return total;
     }
 
     /**
-     * Gera uma URL de imagem aleatória
-     * Criado para facilitar testes e simular o envio da imagem
-     * Porém uma das opções é criar um endpoint para upload da imagem em blob store como amazon s3
-     * E retornar uma url, deve se considerar criar um ttl na imagem caso o objeto não seja persistido 
+     * Generates a random image URL.
+     * Created to facilitate testing and simulate image submission.
+     * An alternative approach would be to create an endpoint for uploading images to a blob store such as Amazon S3
+     * and return a URL. Consider setting a TTL on the image if the object is not persisted.
      */
     private String generateRandomImageUrl() {
-        Random random = new Random();
+        ThreadLocalRandom random = ThreadLocalRandom.current();
         String domain = IMAGE_DOMAINS[random.nextInt(IMAGE_DOMAINS.length)];
         String category = CATEGORIES[random.nextInt(CATEGORIES.length)];
         int width = 300 + random.nextInt(200);

@@ -9,6 +9,7 @@ REST API simples para gerenciamento de produtos com Java 17, Spring Boot e Maven
 - **Build:** Maven 3.6+
 - **Testing:** JUnit 5, Mockito
 - **Storage:** JSON file (`data/products.json`)
+- **Templates:** YAML-driven product types (`data/product-templates.yaml`)
 
 ## 📋 Endpoints
 
@@ -89,7 +90,7 @@ curl -X POST http://localhost:8080/api/v1/products \
   -d '{
     "name": "iPhone 15",
     "description": "Smartphone Apple",
-    "price": 999.99,
+    "price": { "value": 999.99, "unit": "BRL" },
     "type": "CELLPHONES",
     "color": "Black",
     "imageUrl": "https://example.com/iphone15.jpg"
@@ -104,7 +105,7 @@ curl -X PUT http://localhost:8080/api/v1/products/{id} \
   -d '{
     "name": "iPhone 15 Pro",
     "description": "Smartphone Apple Pro",
-    "price": 1099.99,
+    "price": { "value": 1099.99, "unit": "BRL" },
     "type": "CELLPHONES",
     "color": "Titanium",
     "imageUrl": "https://example.com/iphone15pro.jpg"
@@ -186,9 +187,9 @@ mvn spring-boot:run
 
 API estará disponível em: `http://localhost:8080`
 
-## 🏷️ Product Types
+## 🏷️ Product Types (YAML Templates)
 
-Todos os produtos devem usar um dos tipos definidos no enum `ProductType`. Cada tipo possui specifications específicas:
+Product types are defined via YAML templates in `data/product-templates.yaml`. Each template specifies fields (with default units) and specifications. No enum — types can be added/modified without recompilation.
 
 - **CELLPHONES** (Smartphones): brand, storage_gb, memory_gb, screen_size, camera_mp
 - **COMPUTERS** (Computadores): brand, processor, ram_gb, storage_gb, screen_size
@@ -199,7 +200,18 @@ Todos os produtos devem usar um dos tipos definidos no enum `ProductType`. Cada 
 - **BOOKS** (Livros): author, publisher, pages, language, isbn
 - **SPORTS** (Esportes): size, material, color, technology, warranty_months
 
-Veja [PRODUCT_TYPE_GUIDE.md](PRODUCT_TYPE_GUIDE.md) para detalhes completos e exemplos.
+### Template API Endpoints
+
+```bash
+# List all templates
+curl http://localhost:8080/api/v1/templates
+
+# Get template details for a specific type
+curl http://localhost:8080/api/v1/templates/CELLPHONES
+
+# Reload templates from disk (no restart needed)
+curl -X POST http://localhost:8080/api/v1/templates/reload
+```
 
 ## ✅ Testes
 
@@ -209,14 +221,16 @@ mvn clean test
 ```
 
 Testes disponíveis:
-- ProductServiceTest (23 testes - ✨ busca com filtros + paginação)
-- ProductControllerTest (14 testes - ✨ endpoint unificado com filtros)
+- ProductServiceTest (32 testes - busca com filtros + paginação + applyDefaultUnits)
+- ProductControllerTest (25 testes - endpoint unificado com filtros)
 - ProductComparisonServiceTest (9 testes - comparação)
 - ProductComparisonControllerTest (5 testes - comparação)
-- ProductTypeTest (7 testes - enum validation)
+- ProductTemplateServiceTest (10 testes - YAML loading, validation, reload)
+- TemplateControllerTest (4 testes - template endpoints)
+- MeasurableValueTest (3 testes - builder, null, Jackson serialization)
 - ProductApiIntegrationTest (4 testes)
 
-**Total:** 62 testes (100% passando)
+**Total:** 92 testes (100% passando)
 
 ## 📁 Estrutura
 
@@ -226,23 +240,33 @@ src/
 │   ├── ProductApiApplication.java
 │   ├── model/
 │   │   ├── Product.java
-│   │   ├── ProductType.java                (Enum de tipos)
-│   │   ├── ProductFilter.java              (✨ DTO de filtros com validação)
-│   │   └── ProductComparisonResponse.java  (✨ DTO de comparação)
-│   ├── controller/ProductController.java   (7 endpoints)
-│   ├── service/ProductService.java
-│   ├── repository/ProductRepository.java
+│   │   ├── MeasurableValue.java            (✨ Value+Unit for price/size/weight)
+│   │   ├── ProductFilter.java              (DTO de filtros com validação)
+│   │   ├── ProductComparisonResponse.java  (DTO de comparação)
+│   │   └── template/
+│   │       ├── FieldDefinition.java        (✨ YAML field config)
+│   │       ├── ProductTemplate.java        (✨ Product type template)
+│   │       └── ProductTemplateConfig.java  (✨ YAML root wrapper)
+│   ├── controller/
+│   │   ├── ProductController.java          (7 product endpoints)
+│   │   └── TemplateController.java         (✨ 3 template endpoints)
+│   ├── service/
+│   │   ├── ProductService.java
+│   │   └── ProductTemplateService.java     (✨ YAML template loading)
+│   ├── repository/
+│   │   ├── ProductRepositoryInterface.java
+│   │   └── ProductRepository.java
 │   └── exception/
-│       ├── GlobalExceptionHandler.java     (✨ Validação de tipos e erros)
+│       ├── GlobalExceptionHandler.java
+│       ├── ErrorResponse.java
 │       ├── ProductNotFoundException.java
-│       └── IncompatibleProductTypesException.java (✨ Validação de tipos)
-└── test/java/com/meli/productapi/
-    ├── ProductServiceTest.java
-    ├── ProductControllerTest.java
-    ├── ProductComparisonServiceTest.java       (✨ Testes de comparação)
-    ├── ProductComparisonControllerTest.java    (✨ Testes de comparação)
-    ├── ProductTypeTest.java
-    └── ProductApiIntegrationTest.java
+│       └── IncompatibleProductTypesException.java
+data/
+├── products.json
+├── product-templates.yaml                  (✨ Product type definitions)
+└── test/
+    ├── products-test.json
+    └── product-templates-test.yaml          (✨ Test templates)
 ```
 
 ## 📝 Model
@@ -252,12 +276,12 @@ src/
   "id": "1",
   "name": "iPhone 15 Pro",
   "description": "Latest generation Apple smartphone",
-  "price": 5999.99,
+  "price": { "value": 5999.99, "unit": "BRL" },
   "type": "CELLPHONES",
   "color": "Space Black",
   "imageUrl": "https://picsum.photos/400/600?random=1",
-  "size": "6.1 inches",
-  "weight": 0.187,
+  "size": { "value": 6.1, "unit": "inches" },
+  "weight": { "value": 0.187, "unit": "kg" },
   "rating": 4.8,
   "specifications": {
     "brand": "Apple",
@@ -271,8 +295,8 @@ src/
 
 **Campos Obrigatórios:**
 - `name` - Nome do produto (não pode ser vazio ou null)
-- `price` - Preço (deve ser valor positivo, não pode ser null)
-- `type` - Tipo do produto (usar ProductType enum, não pode ser vazio ou null)
+- `price` - Preço como `MeasurableValue` (`{ "value": 99.99, "unit": "BRL" }`) — value deve ser positivo
+- `type` - Tipo do produto (deve ser um tipo válido definido em `product-templates.yaml`)
 
 **Campos Opcionais:**
 - `description` - Descrição
@@ -283,12 +307,13 @@ src/
 
 ## 📊 Resumo
 
-- ✅ **7 endpoints** (CRUD completo + comparação + count)
-- ✅ **62 testes** (100% passando)
+- ✅ **10 endpoints** (CRUD completo + comparação + count + templates)
+- ✅ **92 testes** (100% passando)
 - ✅ **Endpoint unificado de busca**: GET /api/v1/products com múltiplos filtros
 - ✅ **Filtros disponíveis**: name, description, type, priceMin, priceMax
 - ✅ **Paginação**: page e pageSize (opcional)
-- ✅ **ProductType enum** com 8 tipos padronizados
+- ✅ **YAML templates** com 8 tipos configuráveis (sem recompilação)
+- ✅ **MeasurableValue** para price, size e weight (value + unit)
 - ✅ **Validação rigorosa**: name, type e price obrigatórios (HTTP 400)
 - ✅ **Comparação de produtos** com filtros flexíveis
 - ✅ **Specifications** específicas por tipo

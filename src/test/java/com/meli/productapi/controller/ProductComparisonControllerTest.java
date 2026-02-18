@@ -2,10 +2,9 @@ package com.meli.productapi.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.meli.productapi.model.Product;
-import com.meli.productapi.model.ProductType;
 import com.meli.productapi.model.ProductComparisonResponse;
 import com.meli.productapi.service.ProductService;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -22,6 +21,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ProductController.class)
+@DisplayName("ProductComparisonController — comparison endpoint tests")
 public class ProductComparisonControllerTest {
 
     @Autowired
@@ -32,12 +32,8 @@ public class ProductComparisonControllerTest {
 
     private ObjectMapper objectMapper = new ObjectMapper();
 
-    @BeforeEach
-    void setup() {
-        reset(productService);
-    }
-
     @Test
+    @DisplayName("Should compare products returning all fields")
     void testCompareProductsAllFields() throws Exception {
         // Arrange
         List<Map<String, Object>> comparisonProducts = new ArrayList<>();
@@ -74,6 +70,7 @@ public class ProductComparisonControllerTest {
     }
 
     @Test
+    @DisplayName("Should compare products with specific field filters")
     void testCompareProductsWithFilters() throws Exception {
         // Arrange
         List<Map<String, Object>> comparisonProducts = new ArrayList<>();
@@ -107,6 +104,7 @@ public class ProductComparisonControllerTest {
     }
 
     @Test
+    @DisplayName("Should return 409 Conflict when comparing incompatible product types")
     void testCompareProductsIncompatibleTypes() throws Exception {
         // Arrange
         when(productService.compareProducts(anyList(), any()))
@@ -121,10 +119,11 @@ public class ProductComparisonControllerTest {
     }
 
     @Test
+    @DisplayName("Should return 400 Bad Request when IDs parameter is empty")
     void testCompareProductsEmptyIds() throws Exception {
         // Arrange
         when(productService.compareProducts(anyList(), any()))
-                .thenThrow(new IllegalArgumentException("At least one product ID is required"));
+                .thenThrow(new IllegalArgumentException("At least two product IDs must be provided for comparison"));
 
         // Act & Assert
         mockMvc.perform(get("/api/v1/products/compare")
@@ -135,6 +134,48 @@ public class ProductComparisonControllerTest {
     }
 
     @Test
+    @DisplayName("Should return 400 Bad Request when IDs contain null string")
+    void testCompareProductsWithNullStringId() throws Exception {
+        when(productService.compareProducts(anyList(), any()))
+                .thenThrow(new IllegalArgumentException("Invalid product ID detected: IDs cannot be null, empty, or blank"));
+
+        mockMvc.perform(get("/api/v1/products/compare")
+                .param("ids", "1,null,3"))
+                .andExpect(status().isBadRequest());
+
+        verify(productService, times(1)).compareProducts(anyList(), any());
+    }
+
+    @Test
+    @DisplayName("Should return 400 Bad Request when IDs contain empty values")
+    void testCompareProductsWithEmptyId() throws Exception {
+        when(productService.compareProducts(anyList(), any()))
+                .thenThrow(new IllegalArgumentException("Invalid product ID detected: IDs cannot be null, empty, or blank"));
+
+        mockMvc.perform(get("/api/v1/products/compare")
+                .param("ids", "1,,3"))
+                .andExpect(status().isBadRequest());
+
+        verify(productService, times(1)).compareProducts(anyList(), any());
+    }
+
+    @Test
+    @DisplayName("Should return 400 Bad Request when filter is not comparable")
+    void testCompareProductsWithNonComparableFilter() throws Exception {
+        when(productService.compareProducts(anyList(), anyList()))
+                .thenThrow(new IllegalArgumentException(
+                        "Filter 'brand' is not a comparable field for product type 'CELLPHONES'."));
+
+        mockMvc.perform(get("/api/v1/products/compare")
+                .param("ids", "1,2")
+                .param("filters", "brand"))
+                .andExpect(status().isBadRequest());
+
+        verify(productService, times(1)).compareProducts(anyList(), anyList());
+    }
+
+    @Test
+    @DisplayName("Should compare three products of the same type")
     void testCompareThreeProducts() throws Exception {
         // Arrange
         List<Map<String, Object>> comparisonProducts = new ArrayList<>();

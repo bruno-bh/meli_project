@@ -1,7 +1,7 @@
 package com.meli.productapi.exception;
 
 /**
- * Exception lançada quando tenta-se comparar produtos de tipos diferentes
+ * Exception thrown when attempting to compare products of different types.
  */
 public class IncompatibleProductTypesException extends RuntimeException {
     

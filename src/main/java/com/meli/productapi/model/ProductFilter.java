@@ -6,9 +6,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+
 /**
- * DTO para filtros de busca de produtos
- * Encapsula todos os parâmetros de busca com validações
+ * DTO for product search filters.
+ * Encapsulates all query parameters with validations.
  */
 @Data
 @Builder
@@ -17,50 +19,50 @@ import lombok.NoArgsConstructor;
 public class ProductFilter {
     
     /**
-     * Filtro por nome do produto (busca parcial, case-insensitive)
+     * Filter by product name (partial, case-insensitive search)
      */
     private String name;
     
     /**
-     * Filtro por descrição do produto (busca parcial, case-insensitive)
-     */
-    private String description;
-    
-    /**
-     * Filtro por tipo do produto (busca exata)
+     * Filter by product type (exact match)
      */
     private String type;
     
     /**
-     * Preço mínimo (deve ser maior que zero)
+     * Filter by specification key-value pairs (partial, case-insensitive for text values)
      */
-    @Min(value = 1, message = "Preço mínimo deve ser maior que zero")
+    private Map<String, String> specifications;
+    
+    /**
+     * Minimum price (must be greater than zero)
+     */
+    @Min(value = 1, message = "Minimum price must be greater than zero")
     private Double priceMin;
     
     /**
-     * Preço máximo (deve ser maior que zero)
+     * Maximum price (must be greater than zero)
      */
-    @Min(value = 1, message = "Preço máximo deve ser maior que zero")
+    @Min(value = 1, message = "Maximum price must be greater than zero")
     private Double priceMax;
     
     /**
-     * Número da página (deve ser maior ou igual a 1)
+     * Page number (must be greater than or equal to 1)
      */
-    @Min(value = 1, message = "Número da página deve ser maior ou igual a 1")
+    @Min(value = 1, message = "Page number must be greater than or equal to 1")
     private Integer page;
     
     /**
-     * Tamanho da página (deve ser maior que zero)
+     * Page size (must be greater than zero)
      */
-    @Min(value = 1, message = "Tamanho da página deve ser maior que zero")
+    @Min(value = 1, message = "Page size must be greater than zero")
     private Integer pageSize;
     
     /**
-     * Valida se priceMax >= priceMin
+     * Validates that priceMax >= priceMin
      */
     public void validate() {
         if (priceMin != null && priceMax != null && priceMax < priceMin) {
-            throw new IllegalArgumentException("Preço máximo não pode ser menor que o preço mínimo");
+            throw new IllegalArgumentException("Maximum price cannot be less than the minimum price");
         }
     }
 }

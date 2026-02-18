@@ -2,11 +2,20 @@
     {
         "id": "1",
         "name": "iPhone 15 Pro",
-        "description": "Latest generation Apple smartphone",
-        "price": 5999.99,
-        "size": "6.1 inches",
-        "weight": 0.187,
-        "color": "Space Black",
+        "description": "Apple smartphone with A17 Pro chip, titanium design and 48MP camera system",
+        "price": {
+            "value": 5999.99,
+            "unit": "BRL"
+        },
+        "size": {
+            "value": 6.1,
+            "unit": "inches"
+        },
+        "weight": {
+            "value": 0.187,
+            "unit": "kg"
+        },
+        "color": "Natural Titanium",
         "type": "CELLPHONES",
         "rating": 4.8,
         "specifications": {
@@ -14,95 +23,418 @@
             "storage_gb": "256",
             "memory_gb": "8",
             "screen_size": "6.1",
-            "camera_mp": "48"
+            "camera_mp": "48",
+            "battery_capacity": "3274",
+            "operating_system": "iOS 17",
+            "model_version": "A2848"
         }
     },
     {
         "id": "2",
-        "name": "samsung galaxy S24 Plus",
-        "description": "Latest generation samsung smartphone",
-        "price": 4999.99,
-        "size": "5.9 inches",
-        "weight": 0.147,
-        "color": "Silver",
+        "name": "Samsung Galaxy S24 Ultra",
+        "description": "Samsung flagship with Snapdragon 8 Gen 3, S Pen and 200MP camera",
+        "price": {
+            "value": 7499.99,
+            "unit": "BRL"
+        },
+        "size": {
+            "value": 6.8,
+            "unit": "inches"
+        },
+        "weight": {
+            "value": 0.232,
+            "unit": "kg"
+        },
+        "color": "Titanium Gray",
         "type": "CELLPHONES",
-        "rating": 4.4,
+        "rating": 4.7,
         "specifications": {
             "brand": "Samsung",
-            "storage_gb": "256",
+            "storage_gb": "512",
             "memory_gb": "12",
-            "screen_size": "5.9",
-            "camera_mp": "50"
+            "screen_size": "6.8",
+            "camera_mp": "200",
+            "battery_capacity": "5000",
+            "operating_system": "Android 14",
+            "model_version": "SM-S928B"
         }
     },
     {
         "id": "3",
-        "name": "Premium T-Shirt",
-        "description": "High quality shirt in pure cotton",
-        "price": 129.90,
-        "size": "M",
-        "weight": 0.250,
-        "color": "White",
-        "type": "CLOTHING",
-        "rating": 4.5,
+        "name": "MacBook Pro 14 M3 Pro",
+        "description": "Apple notebook with M3 Pro chip, 18GB RAM and Liquid Retina XDR display",
+        "price": {
+            "value": 16999.00,
+            "unit": "BRL"
+        },
+        "size": {
+            "value": 14.2,
+            "unit": "inches"
+        },
+        "weight": {
+            "value": 1.61,
+            "unit": "kg"
+        },
+        "color": "Space Black",
+        "type": "COMPUTERS",
+        "rating": 4.9,
         "specifications": {
-            "size_us": "M",
-            "size_eu": "40",
-            "material": "100% cotton",
-            "composition": "Pure cotton"
+            "brand": "Apple",
+            "processor": "Apple M3 Pro",
+            "ram_gb": "18",
+            "storage_gb": "512",
+            "screen_size": "14.2"
         }
     },
     {
         "id": "4",
-        "name": "Premium Coffee 500g",
-        "description": "Roasted and ground coffee with selected beans",
-        "price": 45.90,
-        "size": "500g",
-        "weight": 0.5,
-        "color": "Brown",
-        "type": "FOOD",
-        "rating": 4.7,
+        "name": "Dell Inspiron 15 3520",
+        "description": "Dell notebook with Intel Core i7-1255U, 16GB RAM and 512GB SSD",
+        "price": {
+            "value": 4299.00,
+            "unit": "BRL"
+        },
+        "size": {
+            "value": 15.6,
+            "unit": "inches"
+        },
+        "weight": {
+            "value": 1.85,
+            "unit": "kg"
+        },
+        "color": "Carbon Black",
+        "type": "COMPUTERS",
+        "rating": 4.2,
         "specifications": {
-            "manufacturing_date": "2024-01-15",
-            "expiration_date": "2025-01-15",
-            "nutriscore": "A",
-            "origin": "Brazil"
+            "brand": "Dell",
+            "processor": "Intel Core i7-1255U",
+            "ram_gb": "16",
+            "storage_gb": "512",
+            "screen_size": "15.6"
         }
     },
     {
         "id": "5",
-        "name": "Dell 27 inch Monitor",
-        "description": "Full HD monitor with adjustable stand",
-        "price": 899.99,
-        "size": "27\"",
-        "weight": 5.2,
-        "color": "Black",
-        "type": "COMPUTERS",
-        "rating": 4.3,
+        "name": "Levi's 501 Original Fit Jeans",
+        "description": "Classic straight leg jeans with button fly, 100% cotton denim",
+        "price": {
+            "value": 349.90,
+            "unit": "BRL"
+        },
+        "size": {
+            "value": null,
+            "unit": "M"
+        },
+        "weight": {
+            "value": 0.85,
+            "unit": "kg"
+        },
+        "color": "Medium Indigo",
+        "type": "CLOTHING",
+        "rating": 4.6,
         "specifications": {
-            "brand": "Dell",
-            "processor": "N/A",
-            "ram_gb": "N/A",
-            "storage_gb": "N/A",
-            "screen_size": "27"
+            "size_us": "32",
+            "size_eu": "42",
+            "material": "100% cotton denim",
+            "composition": "Cotton twill 12oz",
+            "color_variations": "5"
         }
     },
     {
         "id": "6",
-        "name": "Sports Running Shoes",
-        "description": "Running shoes with cushioning technology",
-        "price": 399.99,
-        "size": "42",
-        "weight": 0.350,
-        "color": "Black with Red",
+        "name": "Nike Dri-FIT Running T-Shirt",
+        "description": "Lightweight moisture-wicking running t-shirt with reflective details",
+        "price": {
+            "value": 149.90,
+            "unit": "BRL"
+        },
+        "size": {
+            "value": null,
+            "unit": "G"
+        },
+        "weight": {
+            "value": 0.15,
+            "unit": "kg"
+        },
+        "color": "Black",
         "type": "CLOTHING",
+        "rating": 4.5,
+        "specifications": {
+            "size_us": "L",
+            "size_eu": "42",
+            "material": "100% recycled polyester",
+            "composition": "Dri-FIT recycled polyester",
+            "color_variations": "8"
+        }
+    },
+    {
+        "id": "7",
+        "name": "Baggio Café Especial 250g",
+        "description": "Specialty single-origin coffee from Minas Gerais, score 84+",
+        "price": {
+            "value": 39.90,
+            "unit": "BRL"
+        },
+        "size": {
+            "value": 250.0,
+            "unit": "g"
+        },
+        "weight": {
+            "value": 0.27,
+            "unit": "kg"
+        },
+        "color": "Dark Brown",
+        "type": "FOOD",
+        "rating": 4.7,
+        "specifications": {
+            "manufacturing_date": "2025-11-01",
+            "expiration_date": "2026-11-01",
+            "nutriscore": "A",
+            "origin": "Minas Gerais, Brazil",
+            "weight": "250"
+        }
+    },
+    {
+        "id": "8",
+        "name": "Nestlé Chocolate Meio Amargo 1kg",
+        "description": "Semi-sweet chocolate bar for cooking and confectionery, 40% cocoa",
+        "price": {
+            "value": 54.90,
+            "unit": "BRL"
+        },
+        "size": {
+            "value": 1000.0,
+            "unit": "g"
+        },
+        "weight": {
+            "value": 1.05,
+            "unit": "kg"
+        },
+        "color": "Dark Brown",
+        "type": "FOOD",
+        "rating": 4.5,
+        "specifications": {
+            "manufacturing_date": "2025-09-10",
+            "expiration_date": "2026-09-10",
+            "nutriscore": "D",
+            "origin": "Brazil",
+            "weight": "1000"
+        }
+    },
+    {
+        "id": "9",
+        "name": "Heineken Lager Beer 350ml",
+        "description": "Premium Dutch lager beer, pure malt, 5% alcohol",
+        "price": {
+            "value": 5.49,
+            "unit": "BRL"
+        },
+        "size": {
+            "value": 350.0,
+            "unit": "ml"
+        },
+        "weight": {
+            "value": 0.58,
+            "unit": "kg"
+        },
+        "color": "Golden",
+        "type": "BEVERAGES",
+        "rating": 4.3,
+        "specifications": {
+            "volume_ml": "350",
+            "origin": "Netherlands",
+            "expiration_date": "2026-06-15",
+            "ingredients": "Water, barley malt, hop extract",
+            "alcohol_content": "5.0"
+        }
+    },
+    {
+        "id": "10",
+        "name": "Água Mineral Crystal 500ml",
+        "description": "Natural mineral water without gas, from natural springs",
+        "price": {
+            "value": 2.49,
+            "unit": "BRL"
+        },
+        "size": {
+            "value": 500.0,
+            "unit": "ml"
+        },
+        "weight": {
+            "value": 0.52,
+            "unit": "kg"
+        },
+        "color": "Transparent",
+        "type": "BEVERAGES",
+        "rating": 4.0,
+        "specifications": {
+            "volume_ml": "500",
+            "origin": "Brazil",
+            "expiration_date": "2027-01-01",
+            "ingredients": "Natural mineral water",
+            "alcohol_content": "0"
+        }
+    },
+    {
+        "id": "11",
+        "name": "IKEA MALM Dresser 6 Drawers",
+        "description": "Modern dresser with 6 drawers in white melamine finish, smooth-running drawers",
+        "price": {
+            "value": 1899.00,
+            "unit": "BRL"
+        },
+        "size": {
+            "value": null,
+            "unit": "80x123x48 cm"
+        },
+        "weight": {
+            "value": 62.0,
+            "unit": "kg"
+        },
+        "color": "White",
+        "type": "FURNITURE",
+        "rating": 4.1,
+        "specifications": {
+            "material": "Engineered wood, melamine foil",
+            "dimensions": "80 x 123 x 48 cm",
+            "weight_kg": "62",
+            "color": "White",
+            "warranty_months": "12"
+        }
+    },
+    {
+        "id": "12",
+        "name": "Tok&Stok Charles Eames Office Chair",
+        "description": "Ergonomic office chair inspired by Charles Eames design with adjustable height",
+        "price": {
+            "value": 749.90,
+            "unit": "BRL"
+        },
+        "size": {
+            "value": null,
+            "unit": "57x82x57 cm"
+        },
+        "weight": {
+            "value": 11.5,
+            "unit": "kg"
+        },
+        "color": "Black",
+        "type": "FURNITURE",
+        "rating": 4.4,
+        "specifications": {
+            "material": "Polypropylene seat, chrome steel base",
+            "dimensions": "57 x 82-92 x 57 cm",
+            "weight_kg": "11.5",
+            "color": "Black",
+            "warranty_months": "24"
+        }
+    },
+    {
+        "id": "13",
+        "name": "Clean Code — Robert C. Martin",
+        "description": "A Handbook of Agile Software Craftsmanship by Robert C. Martin (Uncle Bob)",
+        "price": {
+            "value": 89.90,
+            "unit": "BRL"
+        },
+        "size": {
+            "value": null,
+            "unit": "23 x 15 x 2 cm"
+        },
+        "weight": {
+            "value": 0.56,
+            "unit": "kg"
+        },
+        "color": null,
+        "type": "BOOKS",
+        "rating": 4.8,
+        "specifications": {
+            "author": "Robert C. Martin",
+            "publisher": "Prentice Hall",
+            "pages": "464",
+            "language": "English",
+            "isbn": "978-0132350884"
+        }
+    },
+    {
+        "id": "14",
+        "name": "O Senhor dos Anéis — J.R.R. Tolkien",
+        "description": "Complete box set with the three volumes: The Fellowship of the Ring, The Two Towers and The Return of the King",
+        "price": {
+            "value": 119.90,
+            "unit": "BRL"
+        },
+        "size": {
+            "value": null,
+            "unit": "21 x 14 x 7 cm"
+        },
+        "weight": {
+            "value": 1.82,
+            "unit": "kg"
+        },
+        "color": null,
+        "type": "BOOKS",
+        "rating": 4.9,
+        "specifications": {
+            "author": "J.R.R. Tolkien",
+            "publisher": "HarperCollins",
+            "pages": "1216",
+            "language": "Portuguese",
+            "isbn": "978-8595084759"
+        }
+    },
+    {
+        "id": "15",
+        "name": "Nike Air Zoom Pegasus 41",
+        "description": "Running shoes with Zoom Air cushioning and breathable Flymesh upper",
+        "price": {
+            "value": 799.99,
+            "unit": "BRL"
+        },
+        "size": {
+            "value": null,
+            "unit": "42"
+        },
+        "weight": {
+            "value": 0.272,
+            "unit": "kg"
+        },
+        "color": "Black/White",
+        "type": "SPORTS",
+        "rating": 4.7,
+        "specifications": {
+            "size": "42 BR / 10 US",
+            "material": "Flymesh + rubber outsole",
+            "color": "Black/White",
+            "technology": "Nike Zoom Air, React foam",
+            "warranty_months": "3"
+        }
+    },
+    {
+        "id": "16",
+        "name": "Adidas Brazuca Official Match Ball",
+        "description": "Official FIFA match ball with thermally bonded panels for consistent flight",
+        "price": {
+            "value": 499.90,
+            "unit": "BRL"
+        },
+        "size": {
+            "value": null,
+            "unit": "5"
+        },
+        "weight": {
+            "value": 0.437,
+            "unit": "kg"
+        },
+        "color": "White/Multicolor",
+        "type": "SPORTS",
         "rating": 4.6,
         "specifications": {
-            "size_us": "10",
-            "size_eu": "42",
-            "material": "Mesh + Rubber",
-            "composition": "Synthetic fibers with rubber sole",
-            "color_variations": "3"
+            "size": "5 (official)",
+            "material": "Thermoplastic polyurethane (TPU)",
+            "color": "White/Multicolor",
+            "technology": "Thermally bonded panels",
+            "warranty_months": "6"
         }
     }
 ]

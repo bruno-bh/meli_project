@@ -1,0 +1,342 @@
+templates:
+  CELLPHONES:
+    display_name: "Smartphones"
+    fields:
+      price:
+        type: number
+        default_unit: "BRL"
+        required: true
+        comparable: true
+      size:
+        type: number
+        default_unit: "inches"
+        required: true
+        comparable: true
+      weight:
+        type: number
+        default_unit: "kg"
+        required: true
+        comparable: true
+    specifications:
+      brand:
+        type: text
+        required: true
+        comparable: false
+      storage_gb:
+        type: number
+        default_unit: "GB"
+        required: false
+        comparable: true
+      memory_gb:
+        type: number
+        default_unit: "GB"
+        required: false
+        comparable: true
+      screen_size:
+        type: number
+        default_unit: "inches"
+        required: false
+        comparable: true
+      camera_mp:
+        type: number
+        default_unit: "MP"
+        required: false
+        comparable: true
+      battery_capacity:
+        type: number
+        default_unit: "mAh"
+        required: false
+        comparable: true
+      operating_system:
+        type: text
+        required: false
+        comparable: false
+      model_version:
+        type: text
+        required: false
+        comparable: false
+
+  COMPUTERS:
+    display_name: "Computadores"
+    fields:
+      price:
+        type: number
+        default_unit: "BRL"
+        required: true
+        comparable: true
+      size:
+        type: number
+        default_unit: "inches"
+        required: false
+        comparable: true
+      weight:
+        type: number
+        default_unit: "kg"
+        required: false
+        comparable: true
+    specifications:
+      brand:
+        type: text
+        required: true
+        comparable: false
+      processor:
+        type: text
+        required: false
+        comparable: false
+      ram_gb:
+        type: number
+        default_unit: "GB"
+        required: false
+        comparable: true
+      storage_gb:
+        type: number
+        default_unit: "GB"
+        required: false
+        comparable: true
+      screen_size:
+        type: number
+        default_unit: "inches"
+        required: false
+        comparable: true
+
+  CLOTHING:
+    display_name: "Roupas"
+    fields:
+      price:
+        type: number
+        default_unit: "BRL"
+        required: true
+        comparable: true
+      size:
+        type: text
+        required: false
+        comparable: false
+      weight:
+        type: number
+        default_unit: "kg"
+        required: false
+        comparable: true
+    specifications:
+      size_us:
+        type: text
+        required: false
+        comparable: false
+      size_eu:
+        type: text
+        required: false
+        comparable: false
+      material:
+        type: text
+        required: false
+        comparable: false
+      composition:
+        type: text
+        required: false
+        comparable: false
+      color_variations:
+        type: text
+        required: false
+        comparable: false
+
+  FOOD:
+    display_name: "Alimentos"
+    fields:
+      price:
+        type: number
+        default_unit: "BRL"
+        required: true
+        comparable: true
+      size:
+        type: number
+        default_unit: "g"
+        required: false
+        comparable: true
+      weight:
+        type: number
+        default_unit: "kg"
+        required: false
+        comparable: true
+    specifications:
+      manufacturing_date:
+        type: date
+        required: false
+        comparable: false
+      expiration_date:
+        type: date
+        required: false
+        comparable: false
+      nutriscore:
+        type: text
+        required: false
+        comparable: false
+      origin:
+        type: text
+        required: false
+        comparable: false
+      weight:
+        type: number
+        default_unit: "g"
+        required: false
+        comparable: true
+
+  BEVERAGES:
+    display_name: "Bebidas"
+    fields:
+      price:
+        type: number
+        default_unit: "BRL"
+        required: true
+        comparable: true
+      size:
+        type: number
+        default_unit: "ml"
+        required: false
+        comparable: true
+      weight:
+        type: number
+        default_unit: "kg"
+        required: false
+        comparable: true
+    specifications:
+      volume_ml:
+        type: number
+        default_unit: "ml"
+        required: false
+        comparable: true
+      origin:
+        type: text
+        required: false
+        comparable: false
+      expiration_date:
+        type: date
+        required: false
+        comparable: false
+      ingredients:
+        type: text
+        required: false
+        comparable: false
+      alcohol_content:
+        type: number
+        default_unit: "%"
+        required: false
+        comparable: true
+
+  FURNITURE:
+    display_name: "Móveis"
+    fields:
+      price:
+        type: number
+        default_unit: "BRL"
+        required: true
+        comparable: true
+      size:
+        type: text
+        required: false
+        comparable: false
+      weight:
+        type: number
+        default_unit: "kg"
+        required: false
+        comparable: true
+    specifications:
+      material:
+        type: text
+        required: false
+        comparable: false
+      dimensions:
+        type: text
+        required: false
+        comparable: false
+      weight_kg:
+        type: number
+        default_unit: "kg"
+        required: false
+        comparable: true
+      color:
+        type: text
+        required: false
+        comparable: false
+      warranty_months:
+        type: number
+        default_unit: "months"
+        required: false
+        comparable: true
+
+  BOOKS:
+    display_name: "Livros"
+    fields:
+      price:
+        type: number
+        default_unit: "BRL"
+        required: true
+        comparable: true
+      size:
+        type: text
+        required: false
+        comparable: false
+      weight:
+        type: number
+        default_unit: "kg"
+        required: false
+        comparable: true
+    specifications:
+      author:
+        type: text
+        required: false
+        comparable: false
+      publisher:
+        type: text
+        required: false
+        comparable: false
+      pages:
+        type: number
+        required: false
+        comparable: true
+      language:
+        type: text
+        required: false
+        comparable: false
+      isbn:
+        type: text
+        required: false
+        comparable: false
+
+  SPORTS:
+    display_name: "Esportes"
+    fields:
+      price:
+        type: number
+        default_unit: "BRL"
+        required: true
+        comparable: true
+      size:
+        type: text
+        required: false
+        comparable: false
+      weight:
+        type: number
+        default_unit: "kg"
+        required: false
+        comparable: true
+    specifications:
+      size:
+        type: text
+        required: false
+        comparable: false
+      material:
+        type: text
+        required: false
+        comparable: false
+      color:
+        type: text
+        required: false
+        comparable: false
+      technology:
+        type: text
+        required: false
+        comparable: false
+      warranty_months:
+        type: number
+        default_unit: "months"
+        required: false
+        comparable: true

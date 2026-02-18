@@ -1,17 +1,58 @@
+# ── Build output ──────────────────────────────────────────────────────
 target/
-.DS_Store
+
+# ── IDE — IntelliJ IDEA ──────────────────────────────────────────────
 .idea/
 *.iml
 *.iws
 *.ipr
-.vscode/
-data/products.json
+
+# ── IDE — Eclipse ────────────────────────────────────────────────────
 .classpath
 .project
 .settings/
+.factorypath
+
+# ── IDE — VS Code ────────────────────────────────────────────────────
+.vscode/
+
+# ── IDE — NetBeans ───────────────────────────────────────────────────
+nbproject/private/
+nbbuild/
+nbdist/
+nb-configuration.xml
+
+# ── Maven ────────────────────────────────────────────────────────────
 .m2/
-*.log
+.mvn/wrapper/maven-wrapper.jar
+
+# ── OS files ─────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ── Java compiled / packaged ─────────────────────────────────────────
 *.class
 *.jar
 *.war
+*.ear
+
+# ── Logs ─────────────────────────────────────────────────────────────
+*.log
+logs/
+spring.log
+
+# ── Environment / secrets ────────────────────────────────────────────
 .env
+.env.*
+
+# ── Runtime data (generated JSON — not the template) ─────────────────
+data/products.json
+
+# ── STS / Spring Tool Suite ──────────────────────────────────────────
+.springBeans
+.sts4-cache/
+
+# ── Crash / heap dumps ──────────────────────────────────────────────
+hs_err_pid*
+replay_pid*

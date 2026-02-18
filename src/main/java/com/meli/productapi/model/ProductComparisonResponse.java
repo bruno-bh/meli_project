@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * DTO para resposta de comparação de produtos
+ * DTO for product comparison response.
  */
 @Getter
 @Setter
@@ -20,14 +20,14 @@ public class ProductComparisonResponse {
     private List<Map<String, Object>> products;
     
     /**
-     * Retorna número de produtos sendo comparados
+     * Returns the number of products being compared.
      */
     public int getProductCount() {
         return products != null ? products.size() : 0;
     }
     
     /**
-     * Retorna número de campos comparados
+     * Returns the number of fields being compared.
      */
     public int getFieldCount() {
         return appliedFilters != null ? appliedFilters.size() : 0;

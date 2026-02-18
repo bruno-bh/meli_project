@@ -1,21 +1,18 @@
 package com.meli.productapi.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
-import java.io.Serializable;
 import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Product implements Serializable {
-    
-    private static final long serialVersionUID = 1L;
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class Product {
 
     @JsonProperty("id")
     private String id;
@@ -27,13 +24,13 @@ public class Product implements Serializable {
     private String description;
 
     @JsonProperty("price")
-    private Double price;
+    private MeasurableValue price;
 
     @JsonProperty("size")
-    private String size;
+    private MeasurableValue size;
 
     @JsonProperty("weight")
-    private Double weight;
+    private MeasurableValue weight;
 
     @JsonProperty("color")
     private String color;
@@ -57,13 +54,12 @@ public class Product implements Serializable {
                 ", name='" + name + '\'' +
                 ", description='" + description + '\'' +
                 ", price=" + price +
-                ", size='" + size + '\'' +
+                ", size=" + size +
                 ", weight=" + weight +
                 ", color='" + color + '\'' +
                 ", type='" + type + '\'' +
                 ", imageUrl='" + imageUrl + '\'' +
                 ", rating=" + rating +
                 ", specifications=" + specifications +
-                '}';
-    }
+                '}';    }
 }
