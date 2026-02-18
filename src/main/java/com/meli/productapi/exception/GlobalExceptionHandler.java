@@ -6,7 +6,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -15,6 +14,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.validation.BindException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -70,18 +70,28 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(
-            MethodArgumentNotValidException ex, WebRequest request) {
-        
+    @ExceptionHandler(BindException.class)
+    public ResponseEntity<ErrorResponse> handleBindException(
+            BindException ex, WebRequest request) {
+
         Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
+        ex.getBindingResult().getAllErrors().forEach(error -> {
+            if (error instanceof FieldError fieldError) {
+                // Check if this is a type conversion failure (e.g., "teste" for a Double field)
+                if (fieldError.contains(org.springframework.beans.TypeMismatchException.class)) {
+                    String fieldName = fieldError.getField();
+                    Object rejectedValue = fieldError.getRejectedValue();
+                    errors.put(fieldName, String.format(
+                            "'%s' is not a valid value for '%s'. A numeric value is required.",
+                            rejectedValue, fieldName));
+                } else {
+                    errors.put(fieldError.getField(),
+                            fieldError.getDefaultMessage() != null ? fieldError.getDefaultMessage() : "Invalid value");
+                }
+            }
         });
 
-        log.warn("Validation failed at {}: {}", extractPath(request), errors);
+        log.warn("Bind/validation failed at {}: {}", extractPath(request), errors);
 
         ErrorResponse response = ErrorResponse.ofValidation(
                 HttpStatus.BAD_REQUEST.value(), "Bad Request", errors, extractPath(request));

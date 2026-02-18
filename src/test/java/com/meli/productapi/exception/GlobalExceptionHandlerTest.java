@@ -153,4 +153,30 @@ class GlobalExceptionHandlerTest {
                 .param("priceMax", "500"))
                 .andExpect(status().isBadRequest());
     }
+
+    // ── BindException (type conversion on query params) ──────────────────
+
+    @Test
+    @DisplayName("Should return 400 with clean message when priceMin is not a number")
+    void testHandlePriceMinNotANumber() throws Exception {
+        mockMvc.perform(get("/api/v1/products")
+                .param("priceMin", "teste"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.fieldErrors.priceMin").value(
+                        "'teste' is not a valid value for 'priceMin'. A numeric value is required."));
+    }
+
+    @Test
+    @DisplayName("Should return 400 with clean message when priceMax is not a number")
+    void testHandlePriceMaxNotANumber() throws Exception {
+        mockMvc.perform(get("/api/v1/products")
+                .param("priceMax", "abc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.fieldErrors.priceMax").value(
+                        "'abc' is not a valid value for 'priceMax'. A numeric value is required."));
+    }
 }
