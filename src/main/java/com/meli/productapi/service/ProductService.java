@@ -122,7 +122,7 @@ public class ProductService {
             if (!templateService.isValidType(filter.getType())) {
                 throw new IllegalArgumentException(
                         "Invalid product type: '" + filter.getType() + "'. Valid types: " +
-                        templateService.getValidTypeNames());
+                                templateService.getValidTypeNames());
             }
         }
 
@@ -135,7 +135,8 @@ public class ProductService {
                     if (!validSpecKeys.contains(specKey)) {
                         throw new IllegalArgumentException(
                                 "Invalid specification key '" + specKey + "' for product type '" +
-                                filter.getType().toUpperCase() + "'. Valid specification keys: " + validSpecKeys);
+                                        filter.getType().toUpperCase() + "'. Valid specification keys: "
+                                        + validSpecKeys);
                     }
                 }
             } else {
@@ -145,37 +146,37 @@ public class ProductService {
                     if (!allSpecKeys.contains(specKey)) {
                         throw new IllegalArgumentException(
                                 "Invalid specification key '" + specKey + "'. " +
-                                "This key does not exist in any product type template.");
+                                        "This key does not exist in any product type template.");
                     }
                 }
             }
         }
-        
+
         log.debug("Searching products with filters: name={}, type={}, priceMin={}, priceMax={}, specifications={}",
                 filter.getName(), filter.getType(), filter.getPriceMin(), filter.getPriceMax(),
                 filter.getSpecifications());
-        
+
         List<Product> allProducts = repository.findAll();
-        
+
         // Apply filters
         List<Product> filteredProducts = allProducts.stream()
                 .filter(product -> {
                     // Filter by name
                     if (filter.getName() != null && !filter.getName().isEmpty()) {
                         if (product.getName() == null ||
-                            !product.getName().toLowerCase().contains(filter.getName().toLowerCase())) {
+                                !product.getName().toLowerCase().contains(filter.getName().toLowerCase())) {
                             return false;
                         }
                     }
-                    
+
                     // Filter by type
                     if (filter.getType() != null && !filter.getType().isEmpty()) {
                         if (product.getType() == null ||
-                            !product.getType().equalsIgnoreCase(filter.getType())) {
+                                !product.getType().equalsIgnoreCase(filter.getType())) {
                             return false;
                         }
                     }
-                    
+
                     // Filter by minimum price
                     if (filter.getPriceMin() != null) {
                         if (product.getPrice() == null || product.getPrice().getValue() == null
@@ -183,7 +184,7 @@ public class ProductService {
                             return false;
                         }
                     }
-                    
+
                     // Filter by maximum price
                     if (filter.getPriceMax() != null) {
                         if (product.getPrice() == null || product.getPrice().getValue() == null
@@ -209,13 +210,13 @@ public class ProductService {
                             }
                         }
                     }
-                    
+
                     return true;
                 })
                 .toList();
-        
+
         log.debug("Filtered {} products from {} total", filteredProducts.size(), allProducts.size());
-        
+
         // Apply pagination via PageResponse
         PageResponse<Product> result;
         if (filter.getPageSize() != null) {
@@ -233,7 +234,8 @@ public class ProductService {
      * Compares multiple products
      * 
      * @param productIds List of product IDs
-     * @param filters    List of fields to compare (empty = all comparable fields from template)
+     * @param filters    List of fields to compare (empty = all comparable fields
+     *                   from template)
      * @return ProductComparisonResponse with comparison data
      * @throws ProductNotFoundException          If any ID does not exist
      * @throws IncompatibleProductTypesException If products have different types
@@ -279,17 +281,15 @@ public class ProductService {
         }
 
         // Validate filters against comparable fields from the template
+        // Non-comparable fields (id, name, imageUrl, description, etc.) cannot be used as filters
         if (filters != null && !filters.isEmpty()) {
             List<String> comparableFields = templateService.getComparableFields(firstType);
-            // Fixed fields that are always valid (always included in response)
-            Set<String> alwaysAllowed = Set.of("id", "name", "description", "imageUrl", "imageurl", "specifications");
 
             for (String filter : filters) {
-                String filterLower = filter.toLowerCase();
-                if (!alwaysAllowed.contains(filterLower) && !comparableFields.contains(filter)) {
+                if (!comparableFields.contains(filter)) {
                     throw new IllegalArgumentException(
                             "Filter '" + filter + "' is not a comparable field for product type '" +
-                            firstType + "'. Comparable fields: " + comparableFields);
+                                    firstType + "'. Comparable fields: " + comparableFields);
                 }
             }
         }
@@ -322,30 +322,21 @@ public class ProductService {
     private Map<String, Object> extractProductFields(Product product, List<String> filters) {
         Map<String, Object> result = new LinkedHashMap<>();
 
-        // Mandatory fields - always included
+        // Informational fields - always included (not comparable)
         result.put("id", product.getId());
         result.put("name", product.getName());
+        if (product.getDescription() != null && !product.getDescription().isEmpty()) {
+            result.put("description", product.getDescription());
+        }
+        if (product.getImageUrl() != null && !product.getImageUrl().isBlank()) {
+            result.put("imageUrl", product.getImageUrl());
+        }
 
-        // Add fields based on filters
+        // Add comparable fields based on filters
         for (String filter : filters) {
             String filterLower = filter.toLowerCase();
 
-            // Skip mandatory fields already added
-            if (filterLower.equals("id") || filterLower.equals("name")) {
-                continue;
-            }
-
             switch (filterLower) {
-                case "description":
-                    if (product.getDescription() != null && !product.getDescription().isEmpty()) {
-                        result.put("description", product.getDescription());
-                    }
-                    break;
-                case "imageurl":
-                    if (product.getImageUrl() != null && !product.getImageUrl().isBlank()) {
-                        result.put("imageUrl", product.getImageUrl());
-                    }
-                    break;
                 case "price":
                     result.put("price", product.getPrice());
                     break;
@@ -402,7 +393,7 @@ public class ProductService {
         if (!templateService.isValidType(product.getType())) {
             throw new IllegalArgumentException(
                     "Invalid product type: '" + product.getType() + "'. Valid types: " +
-                    templateService.getValidTypeNames());
+                            templateService.getValidTypeNames());
         }
         // Validate rating bounds
         if (product.getRating() != null && (product.getRating() < 0.0 || product.getRating() > 5.0)) {
@@ -440,7 +431,7 @@ public class ProductService {
                     if (!validKeys.contains(key)) {
                         throw new IllegalArgumentException(
                                 "Unknown specification key '" + key + "' for product type '" +
-                                product.getType().toUpperCase() + "'. Valid keys: " + validKeys);
+                                        product.getType().toUpperCase() + "'. Valid keys: " + validKeys);
                     }
                 }
             }
@@ -458,7 +449,8 @@ public class ProductService {
     }
 
     /**
-     * Validates that a required field (price, size, weight) is present on the product.
+     * Validates that a required field (price, size, weight) is present on the
+     * product.
      */
     private void validateRequiredField(Product product, String fieldName) {
         switch (fieldName.toLowerCase()) {
@@ -491,16 +483,18 @@ public class ProductService {
                 || product.getSpecifications().get(specKey).toString().trim().isEmpty()) {
             throw new IllegalArgumentException(
                     "Specification '" + specKey + "' is required for product type '" +
-                    product.getType().toUpperCase() + "'");
+                            product.getType().toUpperCase() + "'");
         }
     }
 
     /**
-     * #15: Validates that a specification value matches its expected type from the template.
+     * #15: Validates that a specification value matches its expected type from the
+     * template.
      */
     private void validateSpecValueType(String key, Object value, FieldDefinition fieldDef) {
         String type = fieldDef.getType();
-        if (type == null) return;
+        if (type == null)
+            return;
 
         String strValue = value.toString().trim();
 
@@ -516,7 +510,8 @@ public class ProductService {
             case "date":
                 if (!strValue.matches("\\d{4}-\\d{2}-\\d{2}")) {
                     throw new IllegalArgumentException(
-                            "Specification '" + key + "' must be a valid date in format 'yyyy-MM-dd', but got: '" + strValue + "'");
+                            "Specification '" + key + "' must be a valid date in format 'yyyy-MM-dd', but got: '"
+                                    + strValue + "'");
                 }
                 break;
             default:
@@ -526,7 +521,8 @@ public class ProductService {
     }
 
     /**
-     * Applies default units from the template to MeasurableValue fields that are missing a unit.
+     * Applies default units from the template to MeasurableValue fields that are
+     * missing a unit.
      */
     private void applyDefaultUnits(Product product) {
         Optional<ProductTemplate> templateOpt = templateService.getTemplate(product.getType());

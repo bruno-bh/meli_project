@@ -129,9 +129,9 @@ class ProductComparisonServiceTest {
         assertTrue(firstProduct.containsKey("name"));
         // Comparable fields from template are present
         assertTrue(firstProduct.containsKey("price"));
-        // description and imageUrl are NOT included by default (not comparable)
-        assertFalse(firstProduct.containsKey("description"));
-        assertFalse(firstProduct.containsKey("imageUrl"));
+        // description and imageUrl are always included as informational fields
+        assertTrue(firstProduct.containsKey("description"));
+        assertTrue(firstProduct.containsKey("imageUrl"));
     }
 
     @Test
@@ -157,9 +157,9 @@ class ProductComparisonServiceTest {
         // Mandatory fields always present
         assertTrue(firstProduct.containsKey("id"));
         assertTrue(firstProduct.containsKey("name"));
-        // Description and imageUrl NOT auto-included when not in filters
-        assertFalse(firstProduct.containsKey("description"));
-        assertFalse(firstProduct.containsKey("imageUrl"));
+        // Description and imageUrl are always included as informational fields
+        assertTrue(firstProduct.containsKey("description"));
+        assertTrue(firstProduct.containsKey("imageUrl"));
         // Filter fields
         assertTrue(firstProduct.containsKey("price"));
         assertTrue(firstProduct.containsKey("memory_gb"));
@@ -227,7 +227,7 @@ class ProductComparisonServiceTest {
                 List.of("battery_capacity", "camera_mp", "memory_gb", "price", "screen_size", "size", "storage_gb", "weight"));
 
         List<String> ids = Arrays.asList("iphone-1", "samsung-1", "samsung-2");
-        List<String> filters = Arrays.asList("id", "name", "price");
+        List<String> filters = Arrays.asList("price", "size", "weight");
 
         ProductComparisonResponse response = productService.compareProducts(ids, filters);
 
@@ -246,7 +246,7 @@ class ProductComparisonServiceTest {
                 List.of("battery_capacity", "camera_mp", "memory_gb", "price", "screen_size", "size", "storage_gb", "weight"));
 
         List<String> ids = Arrays.asList("iphone-1", "samsung-1");
-        List<String> filters = Arrays.asList("name", "camera_mp", "memory_gb");
+        List<String> filters = Arrays.asList("price", "camera_mp", "memory_gb");
 
         ProductComparisonResponse response = productService.compareProducts(ids, filters);
 
@@ -394,7 +394,88 @@ class ProductComparisonServiceTest {
         assertTrue(firstProduct.containsKey("id"));
         assertTrue(firstProduct.containsKey("name"));
         assertTrue(firstProduct.containsKey("price"));
-        // description is not a comparable field, should NOT be included by default
-        assertFalse(firstProduct.containsKey("description"));
+        // description and imageUrl are always included as informational fields
+        assertTrue(firstProduct.containsKey("description"));
+        assertTrue(firstProduct.containsKey("imageUrl"));
+    }
+
+    @Test
+    @DisplayName("Should throw exception when filtering by 'id' (non-comparable field)")
+    void testCompareProductsFilterByIdShouldFail() {
+        when(repository.findById("iphone-1")).thenReturn(Optional.of(iphone));
+        when(repository.findById("samsung-1")).thenReturn(Optional.of(samsung));
+        when(templateService.getComparableFields("CELLPHONES")).thenReturn(
+                List.of("battery_capacity", "camera_mp", "memory_gb", "price", "screen_size", "size", "storage_gb", "weight"));
+
+        List<String> ids = Arrays.asList("iphone-1", "samsung-1");
+        List<String> filters = Arrays.asList("id", "price");
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> productService.compareProducts(ids, filters)
+        );
+
+        assertTrue(exception.getMessage().contains("id"));
+        assertTrue(exception.getMessage().contains("not a comparable field"));
+    }
+
+    @Test
+    @DisplayName("Should throw exception when filtering by 'name' (non-comparable field)")
+    void testCompareProductsFilterByNameShouldFail() {
+        when(repository.findById("iphone-1")).thenReturn(Optional.of(iphone));
+        when(repository.findById("samsung-1")).thenReturn(Optional.of(samsung));
+        when(templateService.getComparableFields("CELLPHONES")).thenReturn(
+                List.of("battery_capacity", "camera_mp", "memory_gb", "price", "screen_size", "size", "storage_gb", "weight"));
+
+        List<String> ids = Arrays.asList("iphone-1", "samsung-1");
+        List<String> filters = Arrays.asList("name", "price");
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> productService.compareProducts(ids, filters)
+        );
+
+        assertTrue(exception.getMessage().contains("name"));
+        assertTrue(exception.getMessage().contains("not a comparable field"));
+    }
+
+    @Test
+    @DisplayName("Should throw exception when filtering by 'imageUrl' (non-comparable field)")
+    void testCompareProductsFilterByImageUrlShouldFail() {
+        when(repository.findById("iphone-1")).thenReturn(Optional.of(iphone));
+        when(repository.findById("samsung-1")).thenReturn(Optional.of(samsung));
+        when(templateService.getComparableFields("CELLPHONES")).thenReturn(
+                List.of("battery_capacity", "camera_mp", "memory_gb", "price", "screen_size", "size", "storage_gb", "weight"));
+
+        List<String> ids = Arrays.asList("iphone-1", "samsung-1");
+        List<String> filters = Arrays.asList("imageUrl", "price");
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> productService.compareProducts(ids, filters)
+        );
+
+        assertTrue(exception.getMessage().contains("imageUrl"));
+        assertTrue(exception.getMessage().contains("not a comparable field"));
+    }
+
+    @Test
+    @DisplayName("Should throw exception when filtering by 'description' (non-comparable field)")
+    void testCompareProductsFilterByDescriptionShouldFail() {
+        when(repository.findById("iphone-1")).thenReturn(Optional.of(iphone));
+        when(repository.findById("samsung-1")).thenReturn(Optional.of(samsung));
+        when(templateService.getComparableFields("CELLPHONES")).thenReturn(
+                List.of("battery_capacity", "camera_mp", "memory_gb", "price", "screen_size", "size", "storage_gb", "weight"));
+
+        List<String> ids = Arrays.asList("iphone-1", "samsung-1");
+        List<String> filters = Arrays.asList("description", "price");
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> productService.compareProducts(ids, filters)
+        );
+
+        assertTrue(exception.getMessage().contains("description"));
+        assertTrue(exception.getMessage().contains("not a comparable field"));
     }
 }

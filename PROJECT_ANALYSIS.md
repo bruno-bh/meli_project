@@ -1,6 +1,8 @@
 # 🔍 Senior Backend Analysis — Product API
 
 > **Objective:** Evaluate the project from a senior backend engineer's perspective, identifying strengths and weaknesses across architecture, code quality, testing, security, performance, and operational readiness.
+>
+> **Last Updated:** February 2026 — reflects all implemented improvements to date.
 
 ---
 
@@ -8,214 +10,147 @@
 
 | Dimension | Score | Verdict |
 |-----------|-------|---------|
-| Architecture & Design | ⭐⭐⭐⭐☆ | Solid layered architecture with smart extensibility patterns |
-| Code Quality | ⭐⭐⭐⭐☆ | Clean, consistent, good use of Lombok and Java conventions |
-| Error Handling | ⭐⭐⭐⭐⭐ | Excellent — centralized, comprehensive, user-friendly |
-| Testing | ⭐⭐⭐⭐☆ | 92+ tests with unit, controller, and integration coverage |
-| API Design | ⭐⭐⭐⭐☆ | RESTful, well-versioned, clean endpoint structure |
-| Documentation | ⭐⭐⭐⭐☆ | Detailed README, examples, curl scripts |
-| Security | ⭐⭐☆☆☆ | No auth, no rate limiting, no input sanitization |
+| Architecture & Design | ⭐⭐⭐⭐⭐ | Solid layered architecture with SOLID compliance and smart extensibility |
+| Code Quality | ⭐⭐⭐⭐⭐ | Clean, consistent, excellent use of Lombok, OpenAPI annotations, and Java conventions |
+| Error Handling | ⭐⭐⭐⭐⭐ | Excellent — centralized, comprehensive, user-friendly, 11 handlers |
+| Testing | ⭐⭐⭐⭐⭐ | **182 tests** across 14 test classes — unit, controller, repository, model, integration |
+| API Design | ⭐⭐⭐⭐⭐ | RESTful, well-versioned, Swagger/OpenAPI documented, paginated responses |
+| Documentation | ⭐⭐⭐⭐⭐ | Swagger UI, comprehensive README, curl scripts, copilot-instructions |
+| Security | ⭐⭐⭐☆☆ | API Key authentication via interceptor; no RBAC, no rate limiting |
 | Performance | ⭐⭐☆☆☆ | Full file reads on every operation, no caching |
 | Operational Readiness | ⭐⭐☆☆☆ | No Docker, no CI/CD, no health checks, no metrics |
 
-**Overall: A strong demonstration of backend fundamentals with clear room for production-grade improvements.**
+**Overall: A mature, well-tested REST API with strong architectural foundations. Key improvements (API Key auth, OpenAPI, pagination metadata, repository interface) have been implemented since the initial analysis. Main remaining gaps are in operational infrastructure.**
 
 ---
 
-## ✅ Strong Points
+## 📁 Project Structure (Current State)
 
-### 1. Clean Layered Architecture
+```
+src/main/java/com/meli/productapi/
+├── ProductApiApplication.java                    # Spring Boot entry point
+├── config/                                        # ✅ NEW — Configuration layer
+│   ├── ApiKeyInterceptor.java                    # API Key authentication interceptor
+│   ├── CorsConfig.java                           # Global CORS filter (servlet-level)
+│   ├── OpenApiConfig.java                        # Swagger/OpenAPI metadata + security scheme
+│   └── WebMvcConfig.java                         # Interceptor registration
+├── controller/
+│   ├── ProductController.java                    # REST endpoints (7 endpoints)
+│   └── TemplateController.java                   # Template endpoints (3 endpoints)
+├── model/
+│   ├── Product.java                              # Main entity (Lombok @Builder + OpenAPI @Schema)
+│   ├── MeasurableValue.java                      # Value+Unit DTO for price/size/weight
+│   ├── PageResponse.java                         # ✅ NEW — Generic paginated response wrapper
+│   ├── ProductFilter.java                        # DTO for query params with validation
+│   ├── ProductComparisonResponse.java            # DTO for comparison results
+│   └── template/
+│       ├── FieldDefinition.java                  # YAML field config
+│       ├── ProductTemplate.java                  # Product type template
+│       └── ProductTemplateConfig.java            # YAML root wrapper
+├── service/
+│   ├── ProductService.java                       # Business logic (555 lines)
+│   └── ProductTemplateService.java               # YAML template loading + validation
+├── repository/
+│   ├── ProductRepositoryInterface.java           # ✅ NEW — Repository abstraction (DIP)
+│   └── ProductRepository.java                    # JSON file-based implementation
+└── exception/
+    ├── GlobalExceptionHandler.java               # @RestControllerAdvice (11 handlers)
+    ├── ErrorResponse.java                        # Standard error response DTO
+    ├── ProductNotFoundException.java             # 404 errors
+    └── IncompatibleProductTypesException.java    # 409 errors (comparison)
+```
+
+### Codebase Metrics
+
+| Metric | Value |
+|--------|-------|
+| Production source files | 23 Java files |
+| Production lines of code | ~2,206 |
+| Test source files | 14 Java files |
+| Test lines of code | ~3,862 |
+| Total tests | **182** (100% passing) |
+| Test-to-code ratio | 1.75:1 |
+| Product types (YAML) | 8 |
+| REST endpoints | 10 |
+| Exception handlers | 11 |
+
+---
+
+## ✅ Implemented Features (Current State)
+
+### 1. Clean Layered Architecture (Controller → Service → Repository)
 The project follows a well-defined **Controller → Service → Repository** pattern. Each layer has clear responsibilities:
-- Controllers are thin — they only handle HTTP mapping and delegation
-- Services contain all business logic, validation, and orchestration
-- Repository abstracts data persistence
+- **Controllers** are thin — handle HTTP mapping, `@Valid` delegation, OpenAPI annotations
+- **Services** contain all business logic, validation, filtering, pagination, and comparison logic
+- **Repository** abstracts data persistence via `ProductRepositoryInterface`
 
 This separation of concerns makes the code maintainable, testable, and easy to understand.
 
-### 2. YAML-Driven Product Templates (Extensibility)
-One of the most impressive design decisions. Product types (`CELLPHONES`, `COMPUTERS`, etc.) are defined in `data/product-templates.yaml` instead of Java enums or code. This provides:
+### 2. ✅ Repository Interface (SOLID — DIP Compliance)
+`ProductRepositoryInterface` has been implemented, defining the contract:
+
+```
+ProductRepositoryInterface (interface)
+├── findAll(): List<Product>
+├── findById(String id): Optional<Product>
+├── save(Product product): Product
+├── deleteById(String id): void
+├── existsById(String id): boolean
+└── count(): long
+```
+
+`ProductRepository` implements this interface. `ProductService` depends on the **interface**, not the concrete class — enabling future swaps (e.g., JSON → MongoDB) without modifying the service layer.
+
+### 3. YAML-Driven Product Templates (Extensibility)
+Product types are defined in `data/product-templates.yaml` instead of Java enums. This provides:
 - **Zero-downtime type management** — add/modify types without recompilation
-- **Runtime reload** — `POST /api/v1/templates/reload` refreshes types without restarting
+- **Runtime reload** — `POST /api/v1/templates/reload` refreshes types without restart
 - **Rich field definitions** — each field has `type`, `default_unit`, `required`, and `comparable` attributes
-- **Dynamic validation** — required fields, specification keys, and value types are all validated against templates
+- **Dynamic validation** — required fields, specification keys, and value types all validated against templates
+- **8 product types:** `CELLPHONES`, `COMPUTERS`, `CLOTHING`, `FOOD`, `BEVERAGES`, `FURNITURE`, `BOOKS`, `SPORTS`
 
-This is a **senior-level architectural decision** that shows understanding of configuration-driven design.
+### 4. Comprehensive Error Handling (11 Handlers)
+The `GlobalExceptionHandler` provides centralized error management:
 
-### 3. Comprehensive Error Handling
-The `GlobalExceptionHandler` is excellent:
-- **11 specific exception handlers** covering all common error scenarios
-- **Structured `ErrorResponse` DTO** with `timestamp`, `status`, `error`, `message`, `path`, and optional `fieldErrors`
-- **Custom exceptions** (`ProductNotFoundException`, `IncompatibleProductTypesException`) with semantically correct HTTP status codes (404, 409)
-- **User-friendly messages** — type mismatches, validation failures, and malformed JSON all return clear, descriptive messages
-- **Consistent format** — every error follows the same JSON structure
+| Handler | Exception | HTTP Status |
+|---------|-----------|-------------|
+| 1 | `HttpMessageNotReadableException` | 400 |
+| 2 | `HttpMediaTypeNotSupportedException` | 400 |
+| 3 | `MissingServletRequestParameterException` | 400 |
+| 4 | `BindException` | 400 |
+| 5 | `ConstraintViolationException` | 400 |
+| 6 | `MethodArgumentTypeMismatchException` | 400 |
+| 7 | `IllegalArgumentException` | 400 |
+| 8 | `ProductNotFoundException` | 404 |
+| 9 | `IncompatibleProductTypesException` | 409 |
+| 10 | `Exception` (catch-all) | 500 |
+| 11 | (API Key — via interceptor) | 401 |
 
-### 4. MeasurableValue Pattern
-Using a `value + unit` DTO for `price`, `size`, and `weight` instead of raw primitives is a thoughtful design choice:
-- Avoids ambiguity (Is price in BRL? USD? Is weight in kg? g?)
-- Enables unit-aware default assignment from templates
-- Makes the API self-documenting
-- Facilitates future unit conversion features
+All errors return a structured `ErrorResponse` DTO with `timestamp`, `status`, `error`, `message`, `path`, and optional `fieldErrors`.
 
-### 5. Extensive Test Suite (92+ Tests)
-The testing strategy is well-structured across multiple layers:
+### 5. ✅ API Key Authentication
+An `ApiKeyInterceptor` has been implemented providing:
+- **Header-based authentication** — requires `X-API-KEY` header on all `/api/**` endpoints
+- **Configurable via properties** — `api.security.enabled` and `api.security.key` in `application.properties`
+- **Bypass for Swagger** — excludes `/swagger-ui/**`, `/docs/**`, `/api-docs/**` paths
+- **Bypass for CORS preflight** — allows `OPTIONS` requests without key
+- **Structured error responses** — returns `ErrorResponse` JSON with 401 status on failure
+- **Test isolation** — security disabled in test profile (`api.security.enabled=false`)
 
-| Layer | Test Class | Tests | Strategy |
-|-------|-----------|-------|----------|
-| Unit (Service) | `ProductServiceTest` | 32 | Mocked repository + template service |
-| Unit (Service) | `ProductComparisonServiceTest` | 9 | Comparison logic isolation |
-| Unit (Service) | `ProductTemplateServiceTest` | 10 | YAML loading, validation, reload |
-| Controller | `ProductControllerTest` | 25 | `@WebMvcTest` + `MockMvc` |
-| Controller | `ProductComparisonControllerTest` | 8 | Comparison endpoint |
-| Controller | `TemplateControllerTest` | 4 | Template endpoints |
-| Model | `MeasurableValueTest` | 3 | Builder + serialization |
-| Exception | `ErrorResponseTest` | 5 | DTO factory methods |
-| Exception | `GlobalExceptionHandlerTest` | 11 | Error mapping |
-| Integration | `ProductApiIntegrationTest` | 11 | Full E2E with `@SpringBootTest` |
+### 6. ✅ OpenAPI / Swagger Documentation
+Full API documentation is implemented via `springdoc-openapi-starter-webmvc-ui` (v2.3.0):
+- **Swagger UI** available at `/docs`
+- **OpenAPI spec** at `/api-docs`
+- **`@Operation`** + **`@ApiResponse`** annotations on every endpoint
+- **`@Schema`** annotations on all model classes and fields
+- **Request body examples** with realistic JSON payloads (e.g., Samsung Galaxy S24 Ultra)
+- **API Key security scheme** configured in `OpenApiConfig`
+- **Tag-based grouping** — "Products" and "Templates" tags
+- **Configurable server URL** via `api.server.url` property
 
-Highlights:
-- Parameterized tests (`@ParameterizedTest` + `@CsvSource`) for input validation
-- Integration tests cover full CRUD lifecycle, comparison E2E, and template endpoints
-- Test data is isolated from production data (`data/test/`)
-- `@DisplayName` on all tests for readable output
+### 7. ✅ Pagination Metadata (`PageResponse<T>`)
+The `GET /api/v1/products` endpoint now returns a full `PageResponse<T>` wrapper:
 
-### 6. Robust Input Validation
-Validation is implemented at multiple levels:
-- **Bean Validation (JSR-303)** on `ProductFilter` DTO with `@Min` constraints
-- **Custom `validate()` method** for cross-field rules (priceMax >= priceMin)
-- **Service-level validation** for business rules (product name, type, price, rating range 0-5)
-- **Template-driven validation** — required fields, valid spec keys, value type checking (number, date)
-- **Query parameter validation** — specification keys validated against template definitions
-
-### 7. Smart Comparison Feature
-The product comparison endpoint is well-designed:
-- **Type safety** — products must be of the same type (409 Conflict otherwise)
-- **Configurable filters** — users can select which fields to compare
-- **Comparable field awareness** — only fields marked `comparable: true` in templates can be used as filters
-- **Always includes id + name** — ensures identifiability in comparison results
-- **Graceful degradation** — unknown spec keys in filters are ignored, not errored
-
-### 8. Thread Safety in Repository
-The `ProductRepository` uses `ReentrantLock` for write operations (`save`, `deleteById`) and `ConcurrentHashMap` in `ProductTemplateService`. This shows awareness of concurrency concerns even in a file-based persistence layer.
-
-### 9. Proper Spring Boot Conventions
-- **Constructor injection** throughout (no `@Autowired` field injection)
-- **`ResponseEntity<T>`** with explicit HTTP status codes in all controller methods
-- **`@Validated`** on controllers for Bean Validation integration
-- **`@CrossOrigin`** configured for CORS
-- **Externalized configuration** via `application.properties`
-
-### 10. Logging Strategy
-- **SLF4J with Logback** — industry standard
-- **Appropriate log levels** — `DEBUG` for internal flow, `INFO` for operations, `WARN` for validation failures, `ERROR` for system failures
-- **Rolling file appender** configured for production with 30-day retention and 1GB cap
-- **Profile-based configuration** — console-only for dev, console + file for prod
-
-### 11. Developer Experience & Documentation
-- **Comprehensive README** with all endpoints, examples, query parameters, error examples
-- **Shell scripts** (`API_EXAMPLES.sh`, `test-api.sh`) for manual API testing
-- **Product model examples** in JSON format
-- **Future roadmap** in README showing planned improvements
-- **Clear project structure** documented in README
-
----
-
-## ❌ Weak Points
-
-### 1. 🔴 Missing Repository Interface (SOLID Violation — DIP)
-**Severity: High**
-
-The `copilot-instructions.md` mentions a `ProductRepositoryInterface`, but **it does not exist**. `ProductService` depends directly on the concrete `ProductRepository` class:
-
-```java
-public class ProductService {
-    private final ProductRepository repository; // ← Concrete class, not an interface
-}
-```
-
-This violates the **Dependency Inversion Principle (DIP)**:
-- Cannot swap implementations (e.g., JSON → MongoDB) without modifying `ProductService`
-- Cannot properly mock the repository in unit tests (though Mockito can mock concrete classes, it's not best practice)
-- Reduces architectural flexibility that was supposedly a design goal
-
-**Recommendation:** Create `ProductRepositoryInterface` and have `ProductRepository` implement it. Inject the interface in `ProductService`.
-
-### 2. 🔴 Severe Performance Issues — Full File Read on Every Operation
-**Severity: High**
-
-Every single operation reads the **entire JSON file** from disk:
-
-```java
-public Optional<Product> findById(String id) {
-    return findAll().stream()  // ← Reads ENTIRE file, deserializes ALL products
-            .filter(product -> product.getId().equals(id))
-            .findFirst();
-}
-
-public long count() {
-    return findAll().size(); // ← Reads ENTIRE file just to count
-}
-
-public boolean existsById(String id) {
-    return findById(id).isPresent(); // ← Reads ENTIRE file to check existence
-}
-```
-
-With N products:
-- `findById`: O(N) — reads all, filters to one
-- `save`: O(N) — reads all, modifies list, writes all back
-- `count`: O(N) — reads all just to get list size
-- `searchProducts`: O(N) — reads all, applies filters in-memory
-
-**Impact:** For a challenge project this is acceptable, but it shows no awareness of data access optimization. Even with file-based persistence, an in-memory cache with dirty-flag writes would dramatically improve performance.
-
-**Recommendation:** Cache the product list in memory, invalidate on writes. Or use `@Cacheable` from Spring.
-
-### 3. 🔴 No Security Layer
-**Severity: High (for production readiness)**
-
-- No authentication (JWT, OAuth2, Basic Auth)
-- No authorization (role-based access control)
-- No rate limiting
-- No input sanitization (XSS/injection through string fields like `name`, `description`)
-- `@CrossOrigin(origins = "*")` — allows all origins (acceptable for a challenge but risky)
-
-**Recommendation:** For a challenge, at minimum mention these in the README as conscious trade-offs. Spring Security + JWT would be the expected production approach.
-
-### 4. 🟡 ProductService Has Too Many Responsibilities (SRP Violation)
-**Severity: Medium**
-
-`ProductService` (~300 lines) handles:
-1. CRUD operations (getById, create, update, delete)
-2. Search with filtering and pagination
-3. Product comparison logic
-4. Product validation
-5. Template-based field validation
-6. Default unit application
-7. Field extraction for comparison
-
-This is a **Single Responsibility Principle (SRP) violation**. The service should be split:
-
-| Class | Responsibility |
-|-------|---------------|
-| `ProductService` | CRUD + search |
-| `ProductComparisonService` | Comparison logic |
-| `ProductValidationService` | All validation rules |
-
-**Note:** The test structure already suggests this split (`ProductComparisonServiceTest` exists), but the code doesn't follow through.
-
-### 5. 🟡 Missing Pagination Metadata
-**Severity: Medium**
-
-The `GET /api/v1/products` endpoint with pagination returns a raw list without metadata:
-
-```json
-[
-  { "id": "1", "name": "..." },
-  { "id": "2", "name": "..." }
-]
-```
-
-**Expected (industry standard):**
 ```json
 {
   "content": [ ... ],
@@ -228,217 +163,396 @@ The `GET /api/v1/products` endpoint with pagination returns a raw list without m
 }
 ```
 
-Without this, the client cannot build pagination controls.
+Features:
+- `PageResponse.of(list, page, pageSize)` — creates paginated slice from full list
+- `PageResponse.ofAll(list)` — wraps all items in a single-page response (when no pageSize specified)
+- Proper edge-case handling (empty lists, page beyond range, null inputs)
+- Fully annotated with `@Schema` for OpenAPI documentation
 
-**Recommendation:** Create a `PageResponse<T>` DTO wrapping the results with pagination metadata.
+### 8. MeasurableValue Pattern
+`price`, `size`, and `weight` use a `value + unit` DTO instead of raw primitives:
+- Avoids ambiguity (Is price in BRL? USD? Is weight in kg? g?)
+- Default units applied automatically from templates
+- Self-documenting API responses
+- Facilitates future unit conversion features
 
-### 6. 🟡 No Request/Response DTOs for Create/Update
+### 9. ✅ Global CORS Configuration (Servlet-Level Filter)
+CORS is configured via a servlet-level `CorsFilter` bean in `CorsConfig`:
+- Runs **before** any Spring MVC interceptor (ensures headers even behind reverse proxies)
+- `AllowedOriginPatterns: *` with `AllowCredentials: true`
+- All standard methods: `GET, POST, PUT, DELETE, OPTIONS, PATCH`
+- `MaxAge: 3600` for preflight caching
+- `Forward-headers-strategy: framework` configured for reverse proxy/HTTPS termination
+
+### 10. Smart Comparison Feature
+The product comparison endpoint (`GET /api/v1/products/compare`):
+- **Type safety** — products must be of the same type (409 Conflict otherwise)
+- **Configurable filters** — users select which fields to compare
+- **Comparable field awareness** — only fields marked `comparable: true` in templates are valid
+- **Always includes id + name** — ensures identifiability
+- **Duplicate ID detection** — prevents comparing a product with itself
+- **Null/blank ID validation** — rejects `null`, `""`, or `"null"` string IDs
+
+### 11. Extensive Test Suite (182 Tests)
+
+| Layer | Test Class | Tests | Strategy |
+|-------|-----------|-------|----------|
+| Unit (Service) | `ProductServiceTest` | 48 | Mocked repo + template service |
+| Unit (Service) | `ProductComparisonServiceTest` | 15 | Comparison logic isolation |
+| Unit (Service) | `ProductTemplateServiceTest` | 13 | YAML loading, validation, reload |
+| Controller | `ProductControllerTest` | 26 | `@WebMvcTest` + `MockMvc` |
+| Controller | `ProductComparisonControllerTest` | 8 | Comparison endpoint |
+| Controller | `TemplateControllerTest` | 4 | Template endpoints |
+| Model | `MeasurableValueTest` | 3 | Builder + serialization |
+| Model | `PageResponseTest` | 7 | Pagination logic + edge cases |
+| Model | `ProductFilterTest` | 8 | Validation + cross-field rules |
+| Repository | `ProductRepositoryTest` | 18 | File-based CRUD + concurrency |
+| Exception | `ErrorResponseTest` | 5 | DTO factory methods |
+| Exception | `GlobalExceptionHandlerTest` | 11 | Error mapping (all 11 handlers) |
+| Config | `ApiKeyInterceptorTest` | 5 | Auth interceptor logic |
+| Integration | `ProductApiIntegrationTest` | 11 | Full E2E with `@SpringBootTest` |
+| **Total** | **14 classes** | **182** | **100% passing** |
+
+Key testing practices:
+- `@ExtendWith(MockitoExtension.class)` for service unit tests
+- `@WebMvcTest` + `MockMvc` for controller tests
+- `@SpringBootTest` + `@AutoConfigureMockMvc` for integration
+- `@DisplayName` on all test methods for readable output
+- Parameterized tests (`@ParameterizedTest` + `@CsvSource`) for input validation
+- Test data isolated from production (`data/test/`)
+- Test security disabled via `api.security.enabled=false`
+
+### 12. Robust Input Validation
+Validation is implemented at multiple levels:
+- **Bean Validation (JSR-303)** on `ProductFilter` DTO with `@Min` constraints
+- **Custom `validate()` method** for cross-field rules (priceMax >= priceMin)
+- **Service-level validation** — name, type, price (> 0), rating (0.0–5.0)
+- **Template-driven validation** — required fields, valid spec keys, spec value types (number, date)
+- **Specification filter validation** — spec keys validated against templates (per-type or global)
+- **Type normalization** — types are uppercased and trimmed before saving
+
+### 13. Thread Safety
+- `ProductRepository` uses `ReentrantLock` for write operations (`save`, `deleteById`)
+- `ProductTemplateService` uses `ConcurrentHashMap` + `volatile` reference for template cache
+
+### 14. Logging Strategy
+- **SLF4J with Logback** — industry standard
+- **Appropriate log levels** — `DEBUG` for internal flow, `INFO` for operations, `WARN` for validation failures, `ERROR` for system failures
+- **Rolling file appender** for production with 30-day retention and 1GB cap
+- **Profile-based configuration** — console-only for dev, console + file for `prod` profile
+- **Structured log patterns** with timestamp, thread, level, logger
+
+### 15. Spring Boot Best Practices
+- **Constructor injection** throughout — no `@Autowired` field injection
+- **`ResponseEntity<T>`** with explicit HTTP status codes in all controller methods
+- **`@Validated`** on controllers for Bean Validation integration
+- **Externalized configuration** via `application.properties`
+- **Separate test configuration** with isolated data files
+
+---
+
+## ❌ Remaining Weak Points
+
+### 1. 🔴 Performance Issues — Full File Read on Every Operation
+**Severity: High**
+
+Every operation reads the **entire JSON file** from disk:
+
+```java
+public Optional<Product> findById(String id) {
+    return findAll().stream()  // ← Reads ENTIRE file, deserializes ALL products
+            .filter(product -> product.getId().equals(id))
+            .findFirst();
+}
+
+public long count() {
+    return findAll().size(); // ← Reads ENTIRE file just to count
+}
+```
+
+With N products:
+- `findById`: O(N) — reads all, filters to one
+- `save`: O(N) — reads all, modifies list, writes all back
+- `count`: O(N) — reads all just to get list size
+- `searchProducts`: O(N) — reads all, applies filters in-memory
+
+**Impact:** For a challenge project this is acceptable, but even with file-based persistence, an in-memory cache with dirty-flag writes would dramatically improve performance.
+
+### 2. 🟡 ProductService Has Too Many Responsibilities (SRP Violation)
+**Severity: Medium**
+
+`ProductService` (555 lines) handles:
+1. CRUD operations (getById, create, update, delete)
+2. Search with filtering and pagination
+3. Product comparison logic (compareProducts, extractProductFields)
+4. Product validation (validateProduct, validateRequiredField, validateRequiredSpec, validateSpecValueType)
+5. Default unit application (applyDefaultUnits)
+
+This is a **Single Responsibility Principle (SRP) violation**. The test structure already has separate `ProductComparisonServiceTest` and `ProductServiceTest`, suggesting the comparison logic should be extracted.
+
+**Recommendation:**
+| Class | Responsibility |
+|-------|---------------|
+| `ProductService` | CRUD + search + pagination |
+| `ProductComparisonService` | Comparison logic + field extraction |
+| `ProductValidationService` | All validation rules + default unit application |
+
+### 3. 🟡 No Request/Response DTOs for Create/Update
 **Severity: Medium**
 
 The `Product` model is used directly as `@RequestBody` for both creation and update:
-
-```java
-@PostMapping
-public ResponseEntity<Product> createProduct(@Valid @RequestBody Product product) { ... }
-```
-
-Problems:
 - Client can send `id` in the creation request (ignored silently)
-- Client can send `rating` on creation (should only be set by the system or users)
+- Client can send `rating` on creation
 - No distinction between required fields for create vs. update
 - Internal model is exposed as the API contract
 
-**Recommendation:** Create `CreateProductRequest`, `UpdateProductRequest`, and `ProductResponse` DTOs with specific validation annotations per operation.
+**Recommendation:** Create `CreateProductRequest`, `UpdateProductRequest`, and `ProductResponse` DTOs.
 
-### 7. 🟡 No API Documentation (Swagger/OpenAPI)
+### 4. 🟡 Update Method (PUT) Behaves Like PATCH
 **Severity: Medium**
 
-There's no machine-readable API specification. The README documents endpoints manually, which:
-- Gets out of sync with code changes
-- Can't be imported into Postman/Insomnia automatically
-- Can't generate client SDKs
-- Can't be used for contract testing
+The `PUT /products/{id}` endpoint skips null fields instead of replacing the entire resource:
 
-**Recommendation:** Add `springdoc-openapi-starter-webmvc-ui` dependency with `@Operation`, `@ApiResponse` annotations. This is low-effort, high-impact.
+```java
+if (productDetails.getName() != null) {
+    product.setName(productDetails.getName());
+}
+```
 
-### 8. 🟡 No Containerization
+**PUT** should replace the entire resource; **PATCH** should partially update. Current behavior is a semantic mismatch.
+
+### 5. 🟡 No Containerization
 **Severity: Medium**
 
-No `Dockerfile` or `docker-compose.yml`. For a challenge that evaluates backend best practices, containerization is often expected. It demonstrates:
+No `Dockerfile` or `docker-compose.yml`. Containerization demonstrates:
 - Environment parity (dev = prod)
 - Deployment readiness
 - Infrastructure-as-code awareness
 
-### 9. 🟡 No Health Check / Observability
+### 6. 🟡 No Health Check / Observability
 **Severity: Medium**
 
 - No Spring Boot Actuator (`/actuator/health`, `/actuator/info`)
 - No metrics (Micrometer/Prometheus)
 - No distributed tracing
 
-These are mentioned in the README roadmap but not implemented. Even basic Actuator is a single dependency addition.
-
-### 10. 🟡 Update Method Does Not Support Partial Updates (PATCH)
+### 7. 🟡 No Sorting/Ordering Capability
 **Severity: Medium**
-
-The `PUT /products/{id}` endpoint requires all fields but behaves like a partial update internally (null fields are skipped). This is semantically incorrect:
-- **PUT** should replace the entire resource
-- **PATCH** should partially update
-
-```java
-// Current code in updateProduct — this is PATCH behavior, not PUT
-if (productDetails.getName() != null) {
-    product.setName(productDetails.getName());
-}
-```
-
-**Recommendation:** Either make PUT replace fully, or rename to PATCH and implement proper JSON Merge Patch / JSON Patch support.
-
-### 11. 🟡 Mixed Language in Documentation
-**Severity: Low-Medium**
-
-The README and code comments mix Portuguese and English:
-- README sections: "Parâmetros de busca", "Como Executar", "Testes"
-- Error messages: Some in English ("Product name is required"), some structures in Portuguese
-- Test display names: Some in English, some in Portuguese
-
-For an international company like Mercado Libre, consistency in English would be more appropriate.
-
-### 12. 🟢 No Sorting/Ordering Capability
-**Severity: Low**
 
 `GET /api/v1/products` supports filtering and pagination but **no sorting**. Users cannot order results by price, name, rating, etc.
 
-**Recommendation:** Add `sortBy` and `sortOrder` parameters to `ProductFilter`.
+### 8. 🟡 API Key Authentication is Basic
+**Severity: Medium**
 
-### 13. 🟢 No CI/CD Pipeline
-**Severity: Low (for a challenge)**
+While API Key auth is implemented, it lacks:
+- **No RBAC (role-based access control)** — all authenticated users have full access
+- **No rate limiting** — susceptible to abuse
+- **Single shared key** — no per-user authentication
+- **No token expiration or rotation**
 
-No `.github/workflows/`, no `Jenkinsfile`, no CI/CD configuration. Including a basic GitHub Actions workflow that runs `mvn clean test` would demonstrate DevOps awareness.
+For production, JWT or OAuth2 would be more appropriate.
 
-### 14. 🟢 Integration Tests Have File System Side Effects
+### 9. 🟢 No CI/CD Pipeline
 **Severity: Low**
 
-`ProductApiIntegrationTest` reads/writes to `data/test/products-test.json`. Multiple test runs or parallel test execution could cause file conflicts. The `@BeforeEach` cleans data, but it's still fragile.
+No `.github/workflows/`, no `Jenkinsfile`. Including a basic GitHub Actions workflow that runs `mvn clean test` would demonstrate DevOps awareness.
+
+### 10. 🟢 Integration Tests Have File System Side Effects
+**Severity: Low**
+
+`ProductApiIntegrationTest` reads/writes to `data/test/products-test.json`. Parallel test execution could cause file conflicts.
 
 **Recommendation:** Use `@TempDir` from JUnit 5 or configure a unique temp file per test run.
 
-### 15. 🟢 `specifications` Map Uses Loose Typing
+### 11. 🟢 `specifications` Map Uses Loose Typing
 **Severity: Low**
 
 ```java
 private Map<String, Object> specifications;
 ```
 
-`Object` allows any value type. While YAML templates define expected types (`number`, `text`, `date`), the Java model doesn't enforce this at compile time. A `Map<String, String>` (as used in comparison responses) or a custom `SpecificationValue` DTO would be more type-safe.
+`Object` allows any value type. While templates define expected types (`number`, `text`, `date`), the Java model doesn't enforce this at compile time.
 
-### 16. 🟢 Image URL Generation is Non-Deterministic
+### 12. 🟢 Image URL Generation is Non-Deterministic
 **Severity: Low**
 
-```java
-private String generateRandomImageUrl() {
-    ThreadLocalRandom random = ThreadLocalRandom.current();
-    // ... random domain, category, dimensions
-}
-```
-
-This makes tests unpredictable and the API response non-deterministic. While it's a placeholder feature, a deterministic approach (e.g., based on product ID or name hash) would be better.
+Random image URLs are generated with `ThreadLocalRandom`, making API responses non-deterministic. A hash-based approach (e.g., product ID hash) would be more predictable.
 
 ---
 
-## 📈 Architecture Diagram
+## 📈 Architecture Diagram (Current)
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        Client (HTTP)                        │
-└─────────────────────────┬───────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    Controller Layer                          │
-│  ┌─────────────────────┐  ┌──────────────────────┐          │
-│  │ ProductController   │  │ TemplateController    │          │
-│  │ (7 endpoints)       │  │ (3 endpoints)         │          │
-│  └────────┬────────────┘  └────────┬─────────────┘          │
-│           │ @Valid                  │                         │
-│           │ @Validated              │                         │
-└───────────┼─────────────────────────┼────────────────────────┘
-            │                         │
-            ▼                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│                     Service Layer                            │
-│  ┌─────────────────────┐  ┌──────────────────────┐          │
-│  │ ProductService      │  │ ProductTemplateService│          │
-│  │ • CRUD              │  │ • YAML loading        │          │
-│  │ • Search + Filter   │◄─┤ • Validation rules    │          │
-│  │ • Comparison        │  │ • Caching (CHM)       │          │
-│  │ • Validation        │  │ • Hot reload          │          │
-│  └────────┬────────────┘  └────────┬─────────────┘          │
-└───────────┼─────────────────────────┼────────────────────────┘
-            │                         │
-            ▼                         ▼
-┌───────────────────────┐  ┌───────────────────────┐
-│   ProductRepository   │  │  product-templates    │
-│   (JSON file R/W)     │  │  .yaml                │
-│   ReentrantLock       │  │  (8 product types)    │
-│   Auto-ID generation  │  │                       │
-└───────────┬───────────┘  └───────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                         Client (HTTP)                           │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    Servlet Filter Layer                          │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │ CorsFilter (global CORS — runs before interceptors)       │  │
+│  └───────────────────────────────────────────────────────────┘  │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    Interceptor Layer                             │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │ ApiKeyInterceptor (X-API-KEY validation on /api/**)       │  │
+│  │   ├── Bypass: OPTIONS, /swagger-ui/**, /docs/**, /api-docs│  │
+│  │   ├── 401 Unauthorized (missing/invalid key)              │  │
+│  │   └── Configurable: api.security.enabled / api.security.key│  │
+│  └───────────────────────────────────────────────────────────┘  │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     Controller Layer                             │
+│  ┌──────────────────────────┐  ┌─────────────────────────────┐  │
+│  │ ProductController        │  │ TemplateController           │  │
+│  │ @Tag("Products")        │  │ @Tag("Templates")            │  │
+│  │ 7 endpoints:            │  │ 3 endpoints:                 │  │
+│  │  GET    /products       │  │  GET    /templates            │  │
+│  │  GET    /products/{id}  │  │  GET    /templates/{type}     │  │
+│  │  POST   /products       │  │  POST   /templates/reload     │  │
+│  │  PUT    /products/{id}  │  │                               │  │
+│  │  DELETE /products/{id}  │  │                               │  │
+│  │  GET    /stats/count    │  │                               │  │
+│  │  GET    /compare        │  │                               │  │
+│  └───────────┬─────────────┘  └──────────────┬────────────────┘  │
+│              │ @Valid / @Validated             │                  │
+│              │ @Operation / @ApiResponse       │                  │
+└──────────────┼────────────────────────────────┼──────────────────┘
+               │                                │
+               ▼                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      Service Layer                               │
+│  ┌──────────────────────────┐  ┌─────────────────────────────┐  │
+│  │ ProductService (555 LOC) │  │ ProductTemplateService       │  │
+│  │ • CRUD operations        │  │ • YAML loading (@PostConst.) │  │
+│  │ • Search + Filter + Page │◄─┤ • Template caching (CHM)     │  │
+│  │ • Comparison logic       │  │ • Type validation            │  │
+│  │ • Product validation     │  │ • Comparable field lookup     │  │
+│  │ • Default unit apply     │  │ • Hot reload                  │  │
+│  └───────────┬──────────────┘  └──────────────┬────────────────┘  │
+└──────────────┼────────────────────────────────┼──────────────────┘
+               │                                │
+               ▼                                ▼
+┌────────────────────────────┐  ┌───────────────────────────────┐
+│ «interface»                │  │  product-templates.yaml       │
+│ ProductRepositoryInterface │  │  8 types:                     │
+│   ▲                        │  │   CELLPHONES, COMPUTERS,      │
+│   │ implements             │  │   CLOTHING, FOOD, BEVERAGES,  │
+│ ProductRepository          │  │   FURNITURE, BOOKS, SPORTS    │
+│   • JSON file R/W          │  └───────────────────────────────┘
+│   • ReentrantLock (writes) │
+│   • Auto-ID generation     │
+│   • Random imageUrl gen.   │
+└───────────┬────────────────┘
             │
             ▼
      data/products.json
 
-┌─────────────────────────────────────────────────────────────┐
-│               Exception Layer (Cross-Cutting)                │
-│  GlobalExceptionHandler → ErrorResponse DTO                  │
-│  11 handlers: 400, 404, 409, 415, 500                        │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                Exception Layer (Cross-Cutting)                   │
+│  GlobalExceptionHandler (@RestControllerAdvice)                  │
+│  11 handlers → ErrorResponse DTO                                 │
+│  Status codes: 400, 401, 404, 409, 500                           │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                  Documentation Layer                             │
+│  OpenApiConfig → Swagger UI at /docs                             │
+│  OpenAPI spec at /api-docs                                       │
+│  API Key security scheme (X-API-KEY)                             │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🎯 Priority Improvement Roadmap
+## 📋 Improvements Implemented vs. Original Analysis
+
+This table tracks which issues from the initial analysis have been resolved:
+
+| # | Original Issue | Status | Notes |
+|---|---------------|--------|-------|
+| 1 | Missing `ProductRepositoryInterface` (DIP) | ✅ **Implemented** | Interface created; `ProductService` depends on abstraction |
+| 2 | No API Documentation (Swagger/OpenAPI) | ✅ **Implemented** | `springdoc-openapi` with full annotations, Swagger UI at `/docs` |
+| 3 | Missing Pagination Metadata | ✅ **Implemented** | `PageResponse<T>` with `page`, `pageSize`, `totalElements`, `totalPages`, `hasNext`, `hasPrevious` |
+| 4 | No Security Layer | ✅ **Partially Implemented** | API Key authentication via `ApiKeyInterceptor`; no RBAC/JWT |
+| 5 | No CORS proper configuration | ✅ **Implemented** | Servlet-level `CorsFilter` with full method/origin/header support |
+| 6 | Performance (full file reads) | ❌ Not addressed | Still reads entire JSON file on every operation |
+| 7 | SRP violation in `ProductService` | ❌ Not addressed | Still 555 lines with mixed responsibilities |
+| 8 | No Request/Response DTOs | ❌ Not addressed | `Product` model used directly as `@RequestBody` |
+| 9 | PUT behaves like PATCH | ❌ Not addressed | Null-check-based partial update on PUT endpoint |
+| 10 | No Containerization | ❌ Not addressed | No Dockerfile or docker-compose |
+| 11 | No Health Check / Observability | ❌ Not addressed | No Actuator, metrics, or tracing |
+| 12 | No Sorting | ❌ Not addressed | No `sortBy`/`sortOrder` parameters |
+| 13 | No CI/CD | ❌ Not addressed | No GitHub Actions or pipeline configuration |
+| 14 | Mixed language in docs | ⚠️ Partially addressed | Code/messages standardized in English; YAML `display_name` values still in Portuguese |
+
+---
+
+## 🎯 Roadmap for Next Versions
 
 ### Phase 1 — Quick Wins (1-2 days)
-| # | Improvement | Impact | Effort |
-|---|------------|--------|--------|
-| 1 | Create `ProductRepositoryInterface` | SOLID compliance | Low |
-| 2 | Add `springdoc-openapi` (Swagger) | API documentation | Low |
-| 3 | Add `spring-boot-starter-actuator` | Health checks, metrics | Low |
-| 4 | Add pagination metadata (`PageResponse<T>`) | Client usability | Low |
-| 5 | Standardize documentation language (English) | Consistency | Low |
+| # | Improvement | Impact | Effort | Details |
+|---|------------|--------|--------|---------|
+| 1 | Add `spring-boot-starter-actuator` | Health checks, info, metrics | Low | Single dependency; `/actuator/health` for liveness/readiness probes |
+| 2 | Add sorting support (`sortBy`, `sortOrder`) | Feature completeness | Low | Add fields to `ProductFilter`, apply `Comparator` in `searchProducts` |
+| 3 | Standardize YAML `display_name` in English | Consistency | Low | "Computadores" → "Computers", "Roupas" → "Clothing", etc. |
+| 4 | Add CI/CD (GitHub Actions) | Automation | Low | Basic workflow: `mvn clean test` on push/PR |
 
 ### Phase 2 — Structural (3-5 days)
-| # | Improvement | Impact | Effort |
-|---|------------|--------|--------|
-| 6 | Split `ProductService` (SRP) | Maintainability | Medium |
-| 7 | Create request/response DTOs | API design quality | Medium |
-| 8 | Add in-memory caching for repository | Performance | Medium |
-| 9 | Add sorting support | Feature completeness | Medium |
-| 10 | Add `Dockerfile` + `docker-compose.yml` | Deployment readiness | Medium |
+| # | Improvement | Impact | Effort | Details |
+|---|------------|--------|--------|---------|
+| 5 | Split `ProductService` (SRP) | Maintainability | Medium | Extract `ProductComparisonService` + `ProductValidationService` |
+| 6 | Create Request/Response DTOs | API design quality | Medium | `CreateProductRequest`, `UpdateProductRequest`, `ProductResponse` |
+| 7 | Add in-memory caching for repository | Performance | Medium | Cache product list; invalidate on writes; or Spring `@Cacheable` |
+| 8 | Add `Dockerfile` + `docker-compose.yml` | Deployment readiness | Medium | Multi-stage build; mount `data/` volume |
+| 9 | Implement proper PATCH endpoint | REST compliance | Medium | `PATCH /products/{id}` with JSON Merge Patch; make PUT full-replace |
 
 ### Phase 3 — Production-Grade (1-2 weeks)
-| # | Improvement | Impact | Effort |
-|---|------------|--------|--------|
-| 11 | Add Spring Security + JWT | Security | High |
-| 12 | Add CI/CD (GitHub Actions) | Automation | Medium |
-| 13 | Add rate limiting | Security + stability | Medium |
-| 14 | Implement PATCH endpoint | REST compliance | Medium |
-| 15 | Add Prometheus metrics + Grafana dashboards | Observability | High |
+| # | Improvement | Impact | Effort | Details |
+|---|------------|--------|--------|---------|
+| 10 | Upgrade to JWT / OAuth2 auth | Security | High | Replace API Key with Spring Security + JWT; user roles |
+| 11 | Add rate limiting | Security + stability | Medium | Bucket4j or Spring Cloud Gateway; per-key rate limits |
+| 12 | Add Prometheus metrics | Observability | Medium | Micrometer + Prometheus exporter; custom counters for CRUD |
+| 13 | Add distributed tracing | Observability | Medium | Micrometer Tracing with Zipkin/Jaeger |
+| 14 | Database migration | Scalability | High | Replace JSON file with PostgreSQL/MongoDB; Spring Data |
+| 15 | Input sanitization (XSS) | Security | Medium | Sanitize `name`, `description`, and string spec values |
 
 ---
 
 ## 🏁 Final Verdict
 
-This project demonstrates **strong backend fundamentals**: clean architecture, comprehensive testing, robust error handling, and a creative template-driven design that goes beyond typical CRUD implementations. The comparison feature with configurable filters and type validation is a differentiator.
+This project demonstrates **strong and evolving backend fundamentals**. Since the initial analysis, significant improvements have been implemented:
 
-The main gaps are in **production readiness** — security, performance optimization, observability, and containerization. These are acknowledged in the README roadmap, which shows awareness even if not implemented.
+### ✅ What Was Delivered
+- **SOLID compliance** — `ProductRepositoryInterface` enables implementation swapping
+- **API documentation** — Full Swagger/OpenAPI with annotated endpoints, examples, and security scheme
+- **Pagination metadata** — Industry-standard `PageResponse<T>` wrapper
+- **API Key authentication** — Header-based security with configurable interceptor
+- **CORS hardening** — Servlet-level filter for reverse proxy compatibility
+- **182 tests** — Nearly doubling the original 92 tests; covers all new features (API Key, pagination, repository)
+- **OpenAPI security integration** — Swagger UI includes API Key authentication flow
 
-**For a coding challenge**, this is a **solid submission** that clearly shows the developer understands:
-- ✅ REST API design principles
-- ✅ Layered architecture and separation of concerns
-- ✅ Comprehensive error handling
-- ✅ Test-driven development across multiple layers
-- ✅ Configuration-driven extensibility
-- ✅ Java/Spring Boot best practices
+### ✅ What the Developer Clearly Understands
+- REST API design principles
+- Layered architecture and separation of concerns
+- Dependency Inversion Principle (DIP)
+- Comprehensive error handling
+- Test-driven development across multiple layers
+- Configuration-driven extensibility (YAML templates)
+- API documentation best practices (OpenAPI/Swagger)
+- Basic authentication patterns
+- Java/Spring Boot best practices
 
-**To elevate from "good" to "excellent"**, the quick wins in Phase 1 (especially Swagger, Actuator, and the repository interface) would have the highest ROI with minimal effort.
+### 🔶 Main Remaining Gaps
+- **Operational infrastructure** — Docker, CI/CD, Actuator, metrics
+- **Performance** — In-memory caching for file-based repository
+- **Service decomposition** — SRP in `ProductService`
+- **Advanced security** — JWT/OAuth2, rate limiting, input sanitization
+
+**For a coding challenge**, this is a **strong, well-rounded submission** that goes beyond typical CRUD implementations with its template-driven design, comparison feature, and comprehensive documentation. The Phase 1 quick wins (Actuator, sorting, CI/CD) would have the highest ROI for the next iteration.

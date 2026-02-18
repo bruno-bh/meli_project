@@ -82,7 +82,7 @@ public class ProductComparisonControllerTest {
 
         ProductComparisonResponse response = ProductComparisonResponse.builder()
                 .productType("CELLPHONES")
-                .appliedFilters(Arrays.asList("name", "price"))
+                .appliedFilters(Arrays.asList("price", "size"))
                 .products(comparisonProducts)
                 .build();
 
@@ -91,7 +91,7 @@ public class ProductComparisonControllerTest {
         // Act & Assert
         mockMvc.perform(get("/api/v1/products/compare")
                 .param("ids", "1,2")
-                .param("filters", "name,price"))
+                .param("filters", "price,size"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.appliedFilters", hasSize(2)))
                 .andExpect(jsonPath("$.products", hasSize(2)));
