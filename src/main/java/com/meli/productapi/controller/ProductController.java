@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/products")
-@CrossOrigin(origins = "*", maxAge = 3600)
 @Validated
 @Tag(name = "Products", description = "Product CRUD, search with filters/pagination, and comparison endpoints")
 public class ProductController {
