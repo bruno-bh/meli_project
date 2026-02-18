@@ -1,7 +1,5 @@
 package com.meli.productapi.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.meli.productapi.model.Product;
 import com.meli.productapi.model.ProductComparisonResponse;
 import com.meli.productapi.service.ProductService;
 import org.junit.jupiter.api.DisplayName;
@@ -29,8 +27,6 @@ public class ProductComparisonControllerTest {
 
     @MockBean
     private ProductService productService;
-
-    private ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     @DisplayName("Should compare products returning all fields")

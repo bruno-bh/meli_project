@@ -2,7 +2,6 @@ package com.meli.productapi.service;
 
 import com.meli.productapi.exception.IncompatibleProductTypesException;
 import com.meli.productapi.exception.ProductNotFoundException;
-import com.meli.productapi.model.MeasurableValue;
 import com.meli.productapi.model.Product;
 import com.meli.productapi.model.ProductComparisonResponse;
 import com.meli.productapi.model.ProductFilter;
