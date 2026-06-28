@@ -340,3 +340,40 @@ templates:
         default_unit: "months"
         required: false
         comparable: true
+
+
+  FRUITS:
+    display_name: "Frutas"
+    fields:
+      price:
+        type: number
+        default_unit: "BRL"
+        required: true
+        comparable: true
+      size:
+        type: number
+        default_unit: "g"
+        required: false
+        comparable: true
+      weight:
+        type: number
+        default_unit: "kg"
+        required: false
+        comparable: true
+    specifications:
+      origin:
+        type: text
+        required: false
+        comparable: false
+      expiration_date:
+        type: date
+        required: false
+        comparable: false
+      sweetness_level:
+        type: text
+        required: false
+        comparable: false
+      juiciness_level:
+        type: text
+        required: false
+        comparable: false

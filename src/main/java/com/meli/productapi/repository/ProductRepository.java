@@ -26,12 +26,12 @@ public class ProductRepository implements ProductRepositoryInterface {
     private final ObjectMapper objectMapper;
     private final ReentrantLock lock = new ReentrantLock();
     private static final String[] IMAGE_DOMAINS = {
-        "https://picsum.photos",
-        "https://via.placeholder.com",
-        "https://loremflickr.com"
+            "https://picsum.photos",
+            "https://via.placeholder.com",
+            "https://loremflickr.com"
     };
     private static final String[] CATEGORIES = {
-        "technology", "fashion", "food", "furniture", "sports", "random"
+            "technology", "fashion", "food", "furniture", "sports", "random"
     };
 
     public ProductRepository(
@@ -53,7 +53,7 @@ public class ProductRepository implements ProductRepositoryInterface {
                 Files.createDirectory(path);
                 log.info("Data directory created: {}", dataDir);
             }
-            
+
             File file = new File(productsFile);
             if (!file.exists()) {
                 objectMapper.writeValue(file, new ArrayList<Product>());
@@ -72,6 +72,7 @@ public class ProductRepository implements ProductRepositoryInterface {
                 return new ArrayList<>();
             }
             List<Product> products = objectMapper.readValue(file, new TypeReference<List<Product>>() {});
+            
             log.debug("Loaded {} products from file", products.size());
             return products;
         } catch (IOException e) {
@@ -90,36 +91,34 @@ public class ProductRepository implements ProductRepositoryInterface {
         lock.lock();
         try {
             List<Product> products = findAll();
-            
+
             if (product.getId() == null || product.getId().isEmpty()) {
                 // Generate incremental ID
-                long nextId = products.stream()
-                    .mapToLong(p -> {
-                        try {
-                            return Long.parseLong(p.getId());
-                        } catch (NumberFormatException e) {
-                            return 0L;
-                        }
-                    })
-                    .max()
-                    .orElse(0L) + 1;
+                long nextId = products.stream().mapToLong(p -> {
+                    try {
+                        return Long.parseLong(p.getId());
+                    } catch (NumberFormatException e) {
+                        return 0L;
+                    }
+                }).max().orElse(0L) + 1;
+
                 product.setId(String.valueOf(nextId));
                 log.debug("Auto-generated ID: {}", product.getId());
             }
-            
+
             // Generate random imageUrl if not set
             if (product.getImageUrl() == null || product.getImageUrl().isEmpty()) {
                 product.setImageUrl(generateRandomImageUrl());
             }
-            
+
             // Set default rating if not set
             if (product.getRating() == null) {
                 product.setRating(0.0);
             }
-            
+
             products.removeIf(p -> p.getId().equals(product.getId()));
             products.add(product);
-            
+
             objectMapper.writeValue(new File(productsFile), products);
             log.debug("Product saved with ID: {}", product.getId());
             return product;
@@ -159,8 +158,10 @@ public class ProductRepository implements ProductRepositoryInterface {
     /**
      * Generates a random image URL.
      * Created to facilitate testing and simulate image submission.
-     * An alternative approach would be to create an endpoint for uploading images to a blob store such as Amazon S3
-     * and return a URL. Consider setting a TTL on the image if the object is not persisted.
+     * An alternative approach would be to create an endpoint for uploading images
+     * to a blob store such as Amazon S3
+     * and return a URL. Consider setting a TTL on the image if the object is not
+     * persisted.
      */
     private String generateRandomImageUrl() {
         ThreadLocalRandom random = ThreadLocalRandom.current();
@@ -168,7 +169,7 @@ public class ProductRepository implements ProductRepositoryInterface {
         String category = CATEGORIES[random.nextInt(CATEGORIES.length)];
         int width = 300 + random.nextInt(200);
         int height = 300 + random.nextInt(200);
-        
+
         if (domain.contains("picsum")) {
             return domain + "/" + width + "/" + height + "?random=" + UUID.randomUUID();
         } else if (domain.contains("placeholder")) {
